@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
+import PasswordInput from "../components/PasswordInput";
 import { ApiError, postJson } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { prefersReducedMotion } from "../lib/format";
@@ -73,11 +74,11 @@ export default function ChangePassword() {
               </p>
             )}
             <label htmlFor="cpCurrent">رمز فعلی</label>
-            <input id="cpCurrent" type="password" autoComplete="current-password" value={current} autoFocus onChange={(e) => setCurrent(e.target.value)} />
+            <PasswordInput id="cpCurrent" autoComplete="current-password" value={current} autoFocus onChange={(e) => setCurrent(e.target.value)} />
             <label htmlFor="cpNext">رمز جدید (دست‌کم ۸ کاراکتر)</label>
-            <input id="cpNext" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+            <PasswordInput id="cpNext" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
             <label htmlFor="cpRepeat">تکرار رمز جدید</label>
-            <input id="cpRepeat" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+            <PasswordInput id="cpRepeat" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
             {(result.error || result.ok) && (
               <div className={result.error ? styles.bad : styles.good} role={result.error ? "alert" : "status"}>
                 {result.error || result.ok}
