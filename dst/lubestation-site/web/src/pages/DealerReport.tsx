@@ -125,8 +125,8 @@ function Report({ dealer, data }: { dealer: Dealer; data: LoadedData }) {
           <BarChart data={byWeekday(ws)} label="مصرف بر اساس روز هفته" />
         </div>
         <div className={g.p4}>
-          <h3 className={`${g.h} ${g.hSmall}`}>مصرف بر اساس ساعت (لیتر)</h3>
-          <BarChart data={byHour(ws)} label="مصرف بر اساس ساعت" labelEvery={2} />
+          <h3 className={`${g.h} ${g.hSmall}`}>مصرف بر اساس ساعت، ۶ تا ۲۰ (لیتر)</h3>
+          <BarChart data={byHour(ws)} label="مصرف بر اساس ساعت از ۶ صبح تا ۸ شب" />
         </div>
       </div>
       <section className={g.panel}>
@@ -190,32 +190,40 @@ function Runway({ ws, inv, cap }: { ws: Withdrawal[]; inv: number | null; cap: n
   );
 }
 
-// Laid out left to right like the device: 7 8 9 / 4 5 6 / 1 2 3 / C . Enter.
-const KEYS = ["۷", "۸", "۹", "۴", "۵", "۶", "۱", "۲", "۳", "C", ".", "Enter"];
+// Laid out left to right like the device: 7 8 9 / 4 5 6 / 1 2 3 / C 0 Enter. Whole litres only.
+const KEYS = ["۷", "۸", "۹", "۴", "۵", "۶", "۱", "۲", "۳", "C", "۰", "Enter"];
+const DIGITS = "۰۱۲۳۴۵۶۷۸۹";
+const MAX_DIGITS = 4;
 
 /**
  * Visual copy of the dispenser's injection panel. It is not connected to the device yet, so the
- * keypad only edits the number on screen and START/STOP send nothing.
+ * keypad only edits the number on screen, the pumped amount stays 0, and START/STOP send nothing.
  */
 function ControlPanel() {
   const [locked, setLocked] = useState(true);
+  /** Litres typed on the keypad (digits only). */
   const [entry, setEntry] = useState("");
-  const [target, setTarget] = useState("");
+  /** Enter pressed: the typed amount is the injection target. */
+  const [confirmed, setConfirmed] = useState(false);
   const [note, setNote] = useState("");
+  // Litres dispensed by the pump in the current injection; comes from the device once connected.
+  const pumped = 0;
 
   function press(k: string) {
     setNote("");
-    if (k === "C") return setEntry("");
-    if (k === "Enter") {
-      setTarget(entry);
-      return setEntry("");
+    if (k === "C") {
+      setEntry("");
+      return setConfirmed(false);
     }
-    if (k === "." && entry.includes(".")) return;
-    if (entry.replace(".", "").length >= 4) return;
-    setEntry(entry + (k === "." ? "." : String("۰۱۲۳۴۵۶۷۸۹".indexOf(k))));
+    if (k === "Enter") return setConfirmed(entry !== "");
+    // Typing after Enter starts a new amount.
+    const base = confirmed ? "" : entry;
+    setConfirmed(false);
+    const next = (base + DIGITS.indexOf(k)).replace(/^0+/, "");
+    if (next.length <= MAX_DIGITS) setEntry(next);
   }
 
-  const shown = (v: string) => (v ? v.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]).replace(".", "٫") : "۰۰");
+  const shown = (n: string | number) => fa(Number(n) || 0);
 
   return (
     <section className={g.panel}>
@@ -244,7 +252,7 @@ function ControlPanel() {
 
         <div className={styles.keypad} dir="ltr">
           {KEYS.map((k) => (
-            <button key={k} type="button" className={k === "Enter" ? styles.enter : k === "C" ? styles.clear : undefined} disabled={locked} onClick={() => press(k)}>
+            <button key={k} type="button" className={k === "Enter" ? styles.enter : k === "C" ? styles.clear : undefined} disabled={locked} aria-label={k === "C" ? "پاک کردن" : k === "Enter" ? "ثبت مقدار" : undefined} onClick={() => press(k)}>
               {k}
             </button>
           ))}
@@ -253,17 +261,20 @@ function ControlPanel() {
         <div className={styles.col}>
           <div className={styles.card}>
             <div className={styles.cardHead}>مقدار (لیتر)</div>
-            <div className={`${styles.cardBody} ${styles.amount}`} dir="ltr">
-              <span>{shown(entry)}</span>
-              <em>/</em>
-              <span>{shown(target)}</span>
+            <div className={styles.amountRow}>
+              <span>در حال تزریق</span>
+              <b>{shown(pumped)}</b>
+            </div>
+            <div className={`${styles.amountRow} ${confirmed ? styles.confirmed : ""}`}>
+              <span>{confirmed ? "مقدار ثبت‌شده" : "مقدار واردشده"}</span>
+              <b>{shown(entry)}</b>
             </div>
           </div>
           <div className={styles.pair}>
             <button type="button" className={styles.stop} onClick={() => setNote("این پنل هنوز به دستگاه وصل نیست؛ فرمان STOP ارسال نشد.")}>
               STOP
             </button>
-            <button type="button" className={styles.start} disabled={locked || !target} onClick={() => setNote("این پنل هنوز به دستگاه وصل نیست؛ فرمان START ارسال نشد.")}>
+            <button type="button" className={styles.start} disabled={locked || !confirmed} onClick={() => setNote("این پنل هنوز به دستگاه وصل نیست؛ فرمان START ارسال نشد.")}>
               START
             </button>
           </div>

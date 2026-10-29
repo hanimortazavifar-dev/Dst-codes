@@ -84,12 +84,15 @@ export function byWeekday(ws: Withdrawal[]): Bar[] {
   return WEEKDAYS.map((label, i) => ({ label, value: totals[i] }));
 }
 
-/** Litres per hour of the day (0–23). */
-export function byHour(ws: Withdrawal[]): Bar[] {
-  const totals = new Array(24).fill(0);
-  for (const w of ws) totals[w.at.getHours()] += w.liters;
+/** Litres per hour of the working day: one bar per hour from `from` to `to`, both included. */
+export function byHour(ws: Withdrawal[], from = 6, to = 20): Bar[] {
+  const totals = new Array(to - from + 1).fill(0);
+  for (const w of ws) {
+    const h = w.at.getHours();
+    if (h >= from && h <= to) totals[h - from] += w.liters;
+  }
   const fa = new Intl.NumberFormat("fa-IR");
-  return totals.map((value, h) => ({ label: fa.format(h), value, title: `ساعت ${fa.format(h)} تا ${fa.format(h + 1)}` }));
+  return totals.map((value, i) => ({ label: fa.format(from + i), value, title: `ساعت ${fa.format(from + i)} تا ${fa.format(from + i + 1)}` }));
 }
 
 const BUCKETS: [number, number, string][] = [

@@ -110,19 +110,38 @@
   text-align: center;
 }
 
-.amount {
+/* Two rows: litres being pumped (top) and the amount typed on the keypad (bottom). */
+.amountRow {
   display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 8px;
-  font-size: 30px;
-  font-variant-numeric: tabular-nums;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
 }
 
-.amount em {
+.amountRow + .amountRow {
+  border-top: 1px solid var(--line);
+}
+
+.amountRow span {
   color: var(--muted);
-  font-size: 22px;
-  font-style: normal;
+  font-size: 12.5px;
+}
+
+.amountRow b {
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.confirmed b {
+  color: var(--amber);
+}
+
+.confirmed span {
+  color: var(--amber);
+  font-weight: 700;
 }
 
 .pair {
