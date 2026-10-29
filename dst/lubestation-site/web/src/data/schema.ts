@@ -52,6 +52,14 @@ export const SHEETS = {
     name: "قطعات یدکی",
     columns: { name: "قطعه", qty: "موجودی (عدد)" },
   },
+  dealers: {
+    name: "نمایندگی‌ها",
+    columns: { name: "نمایندگی", city: "شهر", cap: "ظرفیت مخزن (لیتر)", inv: "موجودی فعلی (لیتر)" },
+  },
+  withdrawals: {
+    name: "برداشت‌ها",
+    columns: { dealer: "نمایندگی", date: "تاریخ", time: "ساعت", liters: "مقدار (لیتر)", device: "دستگاه" },
+  },
   settings: {
     name: "تنظیمات",
     columns: { key: "عنوان", value: "مقدار" },

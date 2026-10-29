@@ -34,6 +34,7 @@ sample template as data), so every page works without PHP.
 |---|---|---|
 | `/` | Home — scroll-driven 3D particle hero | public |
 | `/partner-ecosystem` | Dealer picker | public |
+| `/dealer-report/<slug>` | Dealer bulk-oil report: tank, days left, injection panel (display only), withdrawals by period, consumption charts | signed in |
 | `/scheme-overview` | Bulk-oil scheme overview | public |
 | `/core-operations` | DST company & products | public |
 | `/corporate-governance` | Senior-management tank dashboard | signed in |

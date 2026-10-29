@@ -75,10 +75,20 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: 10px;
-  background: var(--line);
-  color: var(--ink2);
+  background: var(--accent);
+  color: #fff;
   font-size: 12.5px;
-  cursor: not-allowed;
+  text-decoration: none;
+  transition: filter 0.2s;
+}
+
+.btn:hover {
+  filter: brightness(1.15);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .btn svg {

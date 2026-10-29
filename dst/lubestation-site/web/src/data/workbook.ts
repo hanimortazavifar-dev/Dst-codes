@@ -32,6 +32,22 @@ export interface WeekPoint {
   liters: number;
 }
 
+/** A dealer's bulk-oil tank (rows of the "نمایندگی‌ها" sheet). */
+export interface DealerTank {
+  name: string;
+  city: string;
+  cap: number;
+  inv: number;
+}
+
+/** One dispensing event at a dealer (rows of the "برداشت‌ها" sheet). */
+export interface Withdrawal {
+  dealer: string;
+  at: Date;
+  liters: number;
+  device: string;
+}
+
 export interface Issue {
   level: "error" | "warning";
   message: string;
@@ -44,6 +60,9 @@ export interface DashboardData {
   sites: SiteEquipment[];
   services: ServiceRow[];
   parts: { name: string; qty: number }[];
+  dealers: DealerTank[];
+  /** Sorted oldest first. */
+  withdrawals: Withdrawal[];
   settings: { leadDays: number; avgResolutionDays: number | null };
   issues: Issue[];
 }
@@ -104,6 +123,17 @@ function date(c: Cell, issues: Issue[], where: string): Date | null {
   const d = parseDateCell(c);
   if (!d) issues.push({ level: "warning", message: `${where}: تاریخ «${c}» قابل خواندن نیست (نمونهٔ درست: ۱۴۰۵/۰۷/۱۱).` });
   return d;
+}
+
+/** "14:30", "14:30:05", or an Excel time (fraction of a day, possibly with a date part). */
+function timeOfDay(c: Cell): [number, number] | null {
+  if (typeof c === "number" && Number.isFinite(c)) {
+    const minutes = Math.round((c - Math.floor(c)) * 1440) % 1440;
+    return [Math.floor(minutes / 60), minutes % 60];
+  }
+  const m = toAsciiDigits(text(c)).match(/^(\d{1,2})[:٫.](\d{2})/);
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null;
+  return [Number(m[1]), Number(m[2])];
 }
 
 function severity(c: Cell): Severity {
@@ -217,7 +247,37 @@ export function parseWorkbookSheets(book: Map<string, Sheet>): DashboardData {
     .filter((r) => text(r.get("name")))
     .map((r) => ({ name: text(r.get("name")), qty: num(r.get("qty"), issues, `برگه «${S.parts.name}» ردیف ${r.line}`) ?? 0 }));
 
-  return { stations, weekly, tickets, sites, services, parts, settings, issues };
+  const dealerRows = readSheet(book, S.dealers, issues, ["name"]);
+  if (!dealerRows) missingSheet(S.dealers);
+  const dealers = (dealerRows ?? [])
+    .filter((r) => text(r.get("name")))
+    .map((r) => {
+      const where = `برگه «${S.dealers.name}» ردیف ${r.line}`;
+      return { name: text(r.get("name")), city: text(r.get("city")), cap: num(r.get("cap"), issues, where) ?? 0, inv: num(r.get("inv"), issues, where) ?? 0 };
+    });
+
+  const withdrawalRows = readSheet(book, S.withdrawals, issues, ["dealer", "date", "liters"]);
+  if (!withdrawalRows) missingSheet(S.withdrawals);
+  const withdrawals: Withdrawal[] = [];
+  let badDates = 0;
+  for (const r of withdrawalRows ?? []) {
+    const dealer = text(r.get("dealer"));
+    if (!dealer) continue;
+    const day = parseDateCell(r.get("date"));
+    if (!day) {
+      badDates++;
+      continue;
+    }
+    // A date cell holding an Excel date+time also carries the time when the time column is empty.
+    const hm = timeOfDay(r.get("time")) ?? (typeof r.get("date") === "number" ? timeOfDay(r.get("date")) : null) ?? [0, 0];
+    const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hm[0], hm[1]);
+    withdrawals.push({ dealer, at, liters: num(r.get("liters"), issues, `برگه «${S.withdrawals.name}» ردیف ${r.line}`) ?? 0, device: text(r.get("device")) });
+  }
+  // One summary line instead of hundreds when a whole column is in the wrong format.
+  if (badDates) issues.push({ level: "warning", message: `برگه «${S.withdrawals.name}»: تاریخ ${badDates} ردیف قابل خواندن نیست و آن ردیف‌ها نادیده گرفته شدند (نمونهٔ درست: ۱۴۰۵/۰۷/۱۱).` });
+  withdrawals.sort((a, b) => a.at.getTime() - b.at.getTime());
+
+  return { stations, weekly, tickets, sites, services, parts, dealers, withdrawals, settings, issues };
 }
 
 /** Reads and validates the data workbook. Throws XlsxError when the file is not a readable xlsx. */

@@ -144,7 +144,7 @@ function save_users(array $users): void
 // --- page access ----------------------------------------------------------------------------
 
 /** Every page of the site (keys match src/routes.ts). "admin" implies all of them. */
-const LS_PAGES = ['home', 'partners', 'scheme', 'core', 'governance', 'support', 'admin'];
+const LS_PAGES = ['home', 'partners', 'dealers', 'scheme', 'core', 'governance', 'support', 'admin'];
 
 /** Pages open to visitors without an account until an admin changes it. */
 const LS_DEFAULT_PUBLIC = ['home', 'partners', 'scheme', 'core'];
@@ -153,6 +153,7 @@ const LS_DEFAULT_PUBLIC = ['home', 'partners', 'scheme', 'core'];
 const LS_PAGE_SHEETS = [
     'governance' => ['جایگاه‌ها', 'مصرف هفتگی', 'تنظیمات'],
     'support' => ['هشدارها', 'تجهیزات', 'سرویس‌ها', 'قطعات یدکی', 'تنظیمات'],
+    'dealers' => ['نمایندگی‌ها', 'برداشت‌ها', 'تنظیمات'],
 ];
 
 /** Same normalization as titleKey() in src/data/schema.ts. */

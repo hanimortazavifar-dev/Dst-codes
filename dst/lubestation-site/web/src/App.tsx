@@ -13,6 +13,7 @@ const Home = lazy(() => import("./pages/Home"));
 const CorporateGovernance = lazy(() => import("./pages/CorporateGovernance"));
 const TechnicalSupport = lazy(() => import("./pages/TechnicalSupport"));
 const Admin = lazy(() => import("./pages/Admin"));
+const DealerReport = lazy(() => import("./pages/DealerReport"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -99,6 +100,16 @@ const router = createBrowserRouter(
             <Page title="انتخاب نمایندگی — LUBESTATION" path={ROUTES.partners} description="نمایندگی‌های طرح روغن فله LUBESTATION در سراسر کشور.">
               <RequireRole page="partners">
                 <PartnerEcosystem />
+              </RequireRole>
+            </Page>
+          ),
+        },
+        {
+          path: `${ROUTES.dealerReport}/:slug`,
+          element: (
+            <Page title="گزارش نمایندگی — LUBESTATION" noindex>
+              <RequireRole page="dealers">
+                <DealerReport />
               </RequireRole>
             </Page>
           ),

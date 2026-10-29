@@ -4,5 +4,6 @@ Disallow: /api/
 Disallow: /admin
 Disallow: /corporate-governance
 Disallow: /technical-support
+Disallow: /dealer-report
 
 Sitemap: https://lubestation.ir/sitemap.xml

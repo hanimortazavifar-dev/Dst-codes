@@ -20,6 +20,48 @@ interface SheetSpec {
 const st = SHEETS.stations.columns;
 const eq = SHEETS.equipment.columns;
 
+/** Gregorian → Jalali "YYYY/MM/DD" (same algorithm as src/lib/jalali.ts, reversed). */
+function jalali(d: Date) {
+  const gy = d.getFullYear(), gm = d.getMonth() + 1, gd = d.getDate();
+  const gdm = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const gy2 = gm > 2 ? gy + 1 : gy;
+  let days = 355666 + 365 * gy + Math.trunc((gy2 + 3) / 4) - Math.trunc((gy2 + 99) / 100) + Math.trunc((gy2 + 399) / 400) + gd + gdm[gm - 1];
+  let jy = -1595 + 33 * Math.trunc(days / 12053);
+  days %= 12053;
+  jy += 4 * Math.trunc(days / 1461);
+  days %= 1461;
+  if (days > 365) {
+    jy += Math.trunc((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+  const jm = days < 186 ? 1 + Math.trunc(days / 31) : 7 + Math.trunc((days - 186) / 30);
+  const jd = days < 186 ? 1 + (days % 31) : 1 + ((days - 186) % 30);
+  return `${jy}/${String(jm).padStart(2, "0")}/${String(jd).padStart(2, "0")}`;
+}
+
+/**
+ * Sample dispensing log for the Partak dealer: eight weeks up to 28 Oct 2026, no Fridays, a few
+ * injections a day from two devices. Deterministic so the template doesn't change between runs.
+ */
+function sampleWithdrawals(): Value[][] {
+  let seed = 20261028;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const rows: Value[][] = [];
+  const end = new Date(2026, 9, 28);
+  for (let back = 55; back >= 0; back--) {
+    const day = new Date(end.getFullYear(), end.getMonth(), end.getDate() - back);
+    if (day.getDay() === 5) continue; // Friday
+    const count = 1 + Math.floor(rnd() * 5);
+    const times = Array.from({ length: count }, () => 7 * 60 + Math.floor(rnd() * 11 * 60)).sort((a, b) => a - b);
+    for (const t of times) {
+      const liters = Math.round((8 + rnd() * 42) * 10) / 10;
+      const time = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+      rows.push(["پارتاک دیزل اصفهان", jalali(day), time, liters, rnd() < 0.55 ? "DST1" : "DST2"]);
+    }
+  }
+  return rows;
+}
+
 const sheets: SheetSpec[] = [
   {
     name: "راهنما",
@@ -33,6 +75,8 @@ const sheets: SheetSpec[] = [
       ["برگهٔ «جایگاه‌ها»: «نوع» را «واقعی» یا «نمونه» بنویسید. جایگاه نمونه یا بدون مصرف، «غیرفعال» نمایش داده می‌شود."],
       ["محل جایگاه روی نقشه: اگر عرض و طول جغرافیایی خالی باشد، از روی نام مرکز استان در ستون «شهر» تعیین می‌شود."],
       ["وضعیت تجهیزات: «سالم»، «نیازمند بازدید» یا «فوری». اولویت هشدارها: «فوری» یا «نیازمند بازدید»."],
+      ["برگهٔ «برداشت‌ها»: هر ردیف یک برداشت (تزریق) روغن در یک نمایندگی است. ساعت را به شکل 14:30 بنویسید. نام نمایندگی باید با برگهٔ «نمایندگی‌ها» یکی باشد."],
+      ["برگهٔ «نمایندگی‌ها»: ظرفیت و موجودی فعلی مخزن هر نمایندگی برای صفحهٔ «گزارش نمایندگی»."],
       ["این برگه (راهنما) توسط سایت خوانده نمی‌شود."],
     ],
   },
@@ -99,6 +143,24 @@ const sheets: SheetSpec[] = [
     headers: Object.values(SHEETS.parts.columns),
     widths: [26, 14],
     rows: [["سنسور سطح مخزن", 4], ["پمپ انتقال", 1], ["واحد ارتباطی (مودم)", 0], ["شیر کنترل", 3]],
+  },
+  {
+    name: SHEETS.dealers.name,
+    headers: Object.values(SHEETS.dealers.columns),
+    widths: [24, 14, 20, 20],
+    rows: [
+      ["پارتاک دیزل اصفهان", "اصفهان", 6000, 4210],
+      ["آریا دیزل تهران", "تهران", 4000, 0],
+      ["کاویان روان تبریز", "تبریز", 4000, 0],
+      ["سپهر لوب شیراز", "شیراز", 4000, 0],
+    ],
+  },
+  {
+    name: SHEETS.withdrawals.name,
+    headers: Object.values(SHEETS.withdrawals.columns),
+    widths: [24, 14, 10, 14, 10],
+    textCols: [1, 2],
+    rows: sampleWithdrawals(),
   },
   {
     name: SHEETS.settings.name,
