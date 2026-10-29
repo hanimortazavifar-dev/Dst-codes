@@ -255,12 +255,13 @@
   font-size: 13px;
 }
 
-.editor .input {
+.editorField {
   flex: 1 1 200px;
   max-width: 280px;
 }
 
-.editor button {
+/* Direct children only, so the password field's eye button keeps its own style. */
+.editor > button {
   padding: 8px 14px;
   border: 1px solid var(--grey);
   border-radius: 8px;

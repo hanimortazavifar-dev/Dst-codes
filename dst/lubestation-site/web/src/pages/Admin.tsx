@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
+import PasswordInput from "../components/PasswordInput";
 import { invalidateDashboard, useDashboard } from "../data/useDashboard";
 import { parseWorkbook, type DashboardData, type Issue } from "../data/workbook";
 import { ApiError, getJson, postForm, postJson } from "../lib/api";
@@ -395,9 +396,9 @@ function UsersSection() {
           <span>
             رمز جدید برای <b>{who}</b>:
           </span>
-          <input
+          <PasswordInput
             className={styles.input}
-            type="password"
+            wrapClassName={styles.editorField}
             autoComplete="new-password"
             placeholder="دست‌کم ۸ کاراکتر"
             aria-label={`رمز جدید برای ${who}`}
@@ -489,7 +490,7 @@ function UsersSection() {
       <form className={styles.grid} onSubmit={create} noValidate>
         <input className={styles.input} placeholder="نام و نام خانوادگی" aria-label="نام و نام خانوادگی" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={styles.input} type="tel" inputMode="numeric" dir="ltr" placeholder="09xxxxxxxxx" aria-label="شماره موبایل" maxLength={11} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-        <input className={styles.input} type="password" autoComplete="new-password" placeholder="رمز عبور (دست‌کم ۸ کاراکتر)" aria-label="رمز عبور" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <PasswordInput className={styles.input} autoComplete="new-password" placeholder="رمز عبور (دست‌کم ۸ کاراکتر)" aria-label="رمز عبور" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         <fieldset className={styles.pagesField}>
           <legend>دسترسی به صفحه‌ها</legend>
           <PageCells Cell="label" pages={form.pages} disabled={busy} lockAdmin={false} who="کاربر جدید" onToggle={(key, on) => setForm({ ...form, pages: togglePage(form.pages, key, on) })} />
@@ -530,8 +531,8 @@ function PasswordSection() {
     <section className={g.panel}>
       <h2 className={g.h}>تغییر رمز عبور من</h2>
       <form className={styles.grid} onSubmit={submit} noValidate>
-        <input className={styles.input} type="password" autoComplete="current-password" placeholder="رمز فعلی" aria-label="رمز فعلی" value={current} onChange={(e) => setCurrent(e.target.value)} />
-        <input className={styles.input} type="password" autoComplete="new-password" placeholder="رمز جدید" aria-label="رمز جدید" value={next} onChange={(e) => setNext(e.target.value)} />
+        <PasswordInput className={styles.input} autoComplete="current-password" placeholder="رمز فعلی" aria-label="رمز فعلی" value={current} onChange={(e) => setCurrent(e.target.value)} />
+        <PasswordInput className={styles.input} autoComplete="new-password" placeholder="رمز جدید" aria-label="رمز جدید" value={next} onChange={(e) => setNext(e.target.value)} />
         <button type="submit" className={g.btn} disabled={busy}>
           تغییر رمز
         </button>

@@ -2,11 +2,14 @@ import { useState, type InputHTMLAttributes } from "react";
 import { EyeIcon, EyeOffIcon } from "./icons";
 import styles from "./PasswordInput.module.css";
 
-/** Password field with an eye button (at the left end in RTL) that shows or hides the text. */
-export default function PasswordInput({ className, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+/** Password field with an eye button (on the left) that shows or hides the text. */
+export default function PasswordInput({ className, wrapClassName, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
+  /** Class for the wrapper, for layout (flex/grid sizing) in the parent form. */
+  wrapClassName?: string;
+}) {
   const [visible, setVisible] = useState(false);
   return (
-    <div className={styles.wrap}>
+    <div className={`${styles.wrap} ${wrapClassName ?? ""}`}>
       <input {...props} className={`${className ?? ""} ${styles.input}`} type={visible ? "text" : "password"} />
       <button
         type="button"

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { hasAccess, ROLE_LABEL, useAuth } from "../lib/auth";
 import { ROUTES, type PageKey } from "../routes";
+import PasswordInput from "./PasswordInput";
 import styles from "./RequireRole.module.css";
 
 interface Props {
@@ -95,7 +96,7 @@ function LoginForm({ denied }: { denied: boolean }) {
         <label htmlFor="lsPhone">شماره موبایل</label>
         <input id="lsPhone" type="tel" inputMode="numeric" placeholder="09xxxxxxxxx" autoComplete="username" maxLength={11} value={phone} onChange={(e) => setPhone(e.target.value)} />
         <label htmlFor="lsPass">رمز عبور</label>
-        <input id="lsPass" type="password" placeholder="••••••••" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput id="lsPass" placeholder="••••••••" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <button type="submit" disabled={busy}>
           {busy ? "در حال ورود..." : "ورود"}
         </button>
@@ -144,9 +145,9 @@ function SetupForm() {
         <label htmlFor="suPhone">شماره موبایل</label>
         <input id="suPhone" type="tel" inputMode="numeric" placeholder="09xxxxxxxxx" autoComplete="username" maxLength={11} value={phone} onChange={(e) => setPhone(e.target.value)} />
         <label htmlFor="suPass">رمز عبور (دست‌کم ۸ کاراکتر)</label>
-        <input id="suPass" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput id="suPass" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <label htmlFor="suPass2">تکرار رمز عبور</label>
-        <input id="suPass2" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        <PasswordInput id="suPass2" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
         <button type="submit" disabled={busy}>
           {busy ? "در حال ساخت..." : "ساخت حساب مدیر"}
         </button>

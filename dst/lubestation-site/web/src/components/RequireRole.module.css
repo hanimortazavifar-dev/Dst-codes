@@ -60,7 +60,8 @@
   border-color: #22d3ee;
 }
 
-.card button {
+/* Direct children only, so the password fields' eye buttons keep their own style. */
+.card > button {
   width: 100%;
   margin-top: 20px;
   padding: 12px;
@@ -74,7 +75,7 @@
   cursor: pointer;
 }
 
-.card button:disabled {
+.card > button:disabled {
   opacity: 0.6;
   cursor: default;
 }
