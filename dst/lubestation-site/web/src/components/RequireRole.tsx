@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { ApiError, postJson } from "../lib/api";
 import { hasAccess, ROLE_LABEL, useAuth } from "../lib/auth";
 import { ROUTES, type PageKey } from "../routes";
 import styles from "./RequireRole.module.css";
@@ -156,20 +157,82 @@ function SetupForm() {
   );
 }
 
+/** Small box above the badge where any signed-in user changes their own password. */
+function PasswordBox({ onClose }: { onClose: () => void }) {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [repeat, setRepeat] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok?: string; error?: string }>({});
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (next.length < 8) return setResult({ error: "رمز جدید باید دست‌کم ۸ کاراکتر باشد." });
+    if (next !== repeat) return setResult({ error: "تکرار رمز جدید با خود آن یکی نیست." });
+    setBusy(true);
+    setResult({});
+    try {
+      await postJson("auth.php", { action: "password", current, next });
+      setResult({ ok: "رمز عبور شما تغییر کرد." });
+      setCurrent("");
+      setNext("");
+      setRepeat("");
+    } catch (err) {
+      setResult({ error: err instanceof ApiError ? err.message : "تغییر رمز انجام نشد؛ دوباره تلاش کنید." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className={styles.passBox} onSubmit={submit} noValidate>
+      <h3>تغییر رمز عبور</h3>
+      <input type="password" autoComplete="current-password" placeholder="رمز فعلی" aria-label="رمز فعلی" value={current} autoFocus onChange={(e) => setCurrent(e.target.value)} />
+      <input type="password" autoComplete="new-password" placeholder="رمز جدید (دست‌کم ۸ کاراکتر)" aria-label="رمز جدید" value={next} onChange={(e) => setNext(e.target.value)} />
+      <input type="password" autoComplete="new-password" placeholder="تکرار رمز جدید" aria-label="تکرار رمز جدید" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+      {(result.error || result.ok) && (
+        <div className={result.error ? styles.err : styles.ok} role={result.error ? "alert" : "status"}>
+          {result.error || result.ok}
+        </div>
+      )}
+      <div className={styles.passActions}>
+        <button type="submit" disabled={busy}>
+          {busy ? "در حال ذخیره..." : "ذخیره"}
+        </button>
+        <button type="button" className={styles.secondary} onClick={onClose}>
+          بستن
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function UserBadge() {
   const { state, signOut } = useAuth();
   const { pathname } = useLocation();
+  const [passOpen, setPassOpen] = useState(false);
   if (state.status !== "signedIn") return null;
   const { profile } = state;
+  const isAdmin = profile.role === "admin";
   return (
-    <div className={styles.badge}>
-      <span>
-        <b>{profile.name || profile.phone}</b> · {ROLE_LABEL[profile.role] ?? profile.role}
-      </span>
-      {profile.role === "admin" && pathname !== ROUTES.admin && <Link to={ROUTES.admin}>مدیریت</Link>}
-      <button type="button" onClick={signOut}>
-        خروج
-      </button>
+    <div className={styles.badgeWrap}>
+      {passOpen && <PasswordBox onClose={() => setPassOpen(false)} />}
+      <div className={styles.badge}>
+        <span>
+          <b>{profile.name || profile.phone}</b> · {ROLE_LABEL[profile.role] ?? profile.role}
+        </span>
+        {isAdmin ? (
+          // Admins manage users and their own password on the admin page.
+          pathname !== ROUTES.admin && <Link to={`${ROUTES.admin}#users`}>مدیریت کاربران</Link>
+        ) : (
+          <button type="button" className={styles.linkBtn} aria-expanded={passOpen} onClick={() => setPassOpen((o) => !o)}>
+            تغییر رمز
+          </button>
+        )}
+        <button type="button" onClick={signOut}>
+          خروج
+        </button>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,11 @@
   font-size: 13px;
 }
 
+/* Sections reached by #links keep a little space above them when scrolled to. */
+.anchor {
+  scroll-margin-top: 16px;
+}
+
 .muted a {
   color: var(--amber);
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
@@ -63,6 +63,15 @@ export default function Admin() {
       .catch((e) => setMetaError(errorText(e)));
   }, []);
   useEffect(loadMeta, [loadMeta]);
+
+  // Links like /admin#users jump to that section. Delayed so it runs after the route's
+  // scroll-to-top and after the section has rendered.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    const t = window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+    return () => window.clearTimeout(t);
+  }, [hash]);
 
   return (
     <div className={g.page} dir="rtl" lang="fa">
@@ -436,7 +445,7 @@ function UsersSection() {
   }
 
   return (
-    <section className={g.panel}>
+    <section id="users" className={`${g.panel} ${styles.anchor}`}>
       <h2 className={g.h}>کاربران</h2>
       <p className={styles.muted}>
         برای هر کاربر تیک صفحه‌هایی را بزنید که اجازهٔ دیدنشان را دارد. ردیف «بازدیدکنندگان بدون ورود» تعیین می‌کند کدام صفحه‌ها برای همه، بدون ورود، باز باشد؛ بقیهٔ
