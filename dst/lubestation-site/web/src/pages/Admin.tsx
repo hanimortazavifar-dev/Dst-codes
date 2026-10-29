@@ -74,12 +74,12 @@ export default function Admin() {
             <p>مدیریت سامانه</p>
           </div>
           <div className={g.toprow}>
-            <Link className={g.homelink} to={ROUTES.governance}>
-              داشبورد مدیریت ارشد
-            </Link>
             <Link className={g.homelink} to={ROUTES.home}>
               <HomeIcon />
               HOME
+            </Link>
+            <Link className={g.homelink} to={ROUTES.governance}>
+              داشبورد مدیریت ارشد
             </Link>
           </div>
         </header>
