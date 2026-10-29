@@ -101,24 +101,26 @@ function Support({ data }: { data: LoadedData }) {
         </div>
       </section>
 
-      <section className={g.panel}>
-        <h2 className={`${g.h} ${g.hSmall}`}>هشدارهای باز (اولویت‌بندی‌شده)</h2>
-        {tickets.length ? (
-          <div className={`${g.act} ${styles.tickets}`}>
-            {tickets.map((t, i) => (
-              <div key={`${t.title}-${i}`} className={`${g.ai} ${t.severity === "crit" ? g.red : g.warn}`}>
-                <span className={g.dot} />
-                <div className={styles.ticketText}>
-                  <b>{t.title}</b>
-                  {t.detail && <div className={g.sub}>{t.detail}</div>}
+      <section>
+        <h2 className={g.h}>هشدارهای باز (اولویت‌بندی‌شده)</h2>
+        <div className={g.panel}>
+          {tickets.length ? (
+            <div className={`${g.act} ${styles.tickets}`}>
+              {tickets.map((t, i) => (
+                <div key={`${t.title}-${i}`} className={`${g.ai} ${t.severity === "crit" ? g.red : g.warn}`}>
+                  <span className={g.dot} />
+                  <div className={styles.ticketText}>
+                    <b>{t.title}</b>
+                    {t.detail && <div className={g.sub}>{t.detail}</div>}
+                  </div>
+                  <Badge severity={t.severity} />
                 </div>
-                <Badge severity={t.severity} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className={g.empty}>هشدار بازی ثبت نشده است.</p>
-        )}
+              ))}
+            </div>
+          ) : (
+            <p className={g.empty}>هشدار بازی ثبت نشده است.</p>
+          )}
+        </div>
       </section>
 
       {sites.length > 0 && (
@@ -152,52 +154,56 @@ function Support({ data }: { data: LoadedData }) {
       )}
 
       <div className={styles.two}>
-        <section className={g.p4}>
-          <h2 className={`${g.h} ${g.hSmall}`}>تاریخچه سرویس</h2>
-          {services.length ? (
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>تجهیز</th>
-                    <th>نمایندگی</th>
-                    <th>آخرین سرویس</th>
-                    <th>سرویس بعدی</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.map((row, i) => {
-                    const next = until(row.next);
-                    return (
-                      <tr key={i}>
-                        <td>{row.equipment}</td>
-                        <td>{row.site}</td>
-                        <td>{ago(row.last)}</td>
-                        <td>{next.overdue ? <b className={styles.red}>{next.text}</b> : next.text}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className={g.empty}>سابقهٔ سرویسی ثبت نشده است.</p>
-          )}
+        <section>
+          <h2 className={g.h}>تاریخچه سرویس</h2>
+          <div className={g.p4}>
+            {services.length ? (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>تجهیز</th>
+                      <th>نمایندگی</th>
+                      <th>آخرین سرویس</th>
+                      <th>سرویس بعدی</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {services.map((row, i) => {
+                      const next = until(row.next);
+                      return (
+                        <tr key={i}>
+                          <td>{row.equipment}</td>
+                          <td>{row.site}</td>
+                          <td>{ago(row.last)}</td>
+                          <td>{next.overdue ? <b className={styles.red}>{next.text}</b> : next.text}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className={g.empty}>سابقهٔ سرویسی ثبت نشده است.</p>
+            )}
+          </div>
         </section>
-        <section className={g.p4}>
-          <h2 className={`${g.h} ${g.hSmall}`}>موجودی قطعات یدکی</h2>
-          {parts.length ? (
-            <div>
-              {parts.map((p, i) => (
-                <div key={`${p.name}-${i}`} className={styles.part}>
-                  <span>{p.name}</span>
-                  <span className={`${styles.qty} ${p.qty === 0 ? styles.red : ""}`}>{p.qty === 0 ? "ناموجود" : `${fa(p.qty)} عدد`}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={g.empty}>قطعه‌ای ثبت نشده است.</p>
-          )}
+        <section>
+          <h2 className={g.h}>موجودی قطعات یدکی</h2>
+          <div className={g.p4}>
+            {parts.length ? (
+              <div>
+                {parts.map((p, i) => (
+                  <div key={`${p.name}-${i}`} className={styles.part}>
+                    <span>{p.name}</span>
+                    <span className={`${styles.qty} ${p.qty === 0 ? styles.red : ""}`}>{p.qty === 0 ? "ناموجود" : `${fa(p.qty)} عدد`}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={g.empty}>قطعه‌ای ثبت نشده است.</p>
+            )}
+          </div>
         </section>
       </div>
     </>
