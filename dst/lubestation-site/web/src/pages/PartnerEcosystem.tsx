@@ -77,9 +77,7 @@ export default function PartnerEcosystem() {
           </div>
         </header>
 
-        <section>
-          <h2 className={g.h}>نمایندگی‌ها</h2>
-          <p className={styles.intro}>یکی از نمایندگی‌ها را برای مشاهدهٔ گزارش مصرف روغن بالک انتخاب کنید.</p>
+        <section aria-label="نمایندگی‌ها">
           <div className={styles.grid}>
             {DEALERS.map((d) => (
               <Link key={d.slug} className={`${g.p4} ${styles.dealer}`} to={`${ROUTES.dealerReport}/${d.slug}`}>

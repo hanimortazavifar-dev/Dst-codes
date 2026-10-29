@@ -1,11 +1,5 @@
 /* Dealer picker: builds on the management-dashboard theme (Governance.module.css tokens). */
 
-.intro {
-  margin: -4px 0 16px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
