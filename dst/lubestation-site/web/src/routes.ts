@@ -8,6 +8,8 @@ export const ROUTES = {
   scheme: "/scheme-overview",
   core: "/core-operations",
   admin: "/admin",
+  /** Change your own password (any signed-in user). */
+  account: "/account",
 } as const;
 
 /** Section links shown in the home page navigation, in display order. */

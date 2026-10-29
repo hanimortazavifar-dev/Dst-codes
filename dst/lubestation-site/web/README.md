@@ -40,6 +40,7 @@ sample template as data), so every page works without PHP.
 | `/corporate-governance` | Senior-management tank dashboard | signed in |
 | `/technical-support` | Maintenance & support | signed in |
 | `/admin` | Data file, online source, users, own password | admin |
+| `/account` | Change your own password (linked from the user badge) | signed in |
 
 Old addresses (`/#/…` and `*.html`) redirect to these.
 

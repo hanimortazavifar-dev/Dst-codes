@@ -14,6 +14,7 @@ const CorporateGovernance = lazy(() => import("./pages/CorporateGovernance"));
 const TechnicalSupport = lazy(() => import("./pages/TechnicalSupport"));
 const Admin = lazy(() => import("./pages/Admin"));
 const DealerReport = lazy(() => import("./pages/DealerReport"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -150,6 +151,16 @@ const router = createBrowserRouter(
             <Page title="مدیریت سامانه — LUBESTATION" noindex>
               <RequireRole page="admin">
                 <Admin />
+              </RequireRole>
+            </Page>
+          ),
+        },
+        {
+          path: ROUTES.account,
+          element: (
+            <Page title="تغییر رمز عبور — LUBESTATION" noindex>
+              <RequireRole page="signedIn">
+                <ChangePassword />
               </RequireRole>
             </Page>
           ),
