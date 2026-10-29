@@ -1,4 +1,9 @@
-این قسمت مربوط به طراحی سایت lubestation است
+# DST
 
-کد سایت در پوشهٔ [`web/`](web/README.md) است (React + Vite + TypeScript با یک API کوچک PHP برای هاست پارس‌پک).
-داده‌های داشبوردها از یک فایل اکسل خوانده می‌شود؛ فایل نمونه: `web/public/lubestation-data-template.xlsx`.
+کدهای پروژه‌های DST (Diesel Super Technology).
+
+| پوشه | پروژه |
+|---|---|
+| [`dst/lubestation-site/`](dst/lubestation-site/README.md) | سایت LUBESTATION (lubestation.ir) — کد سایت در [`web/`](dst/lubestation-site/web/README.md) |
+
+نسخهٔ قبلی سایت (پیش از بازنویسی، با پوشهٔ `dst-fullsite/`) در شاخهٔ [`original`](../../tree/original) نگه داشته شده است.

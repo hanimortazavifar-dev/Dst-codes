@@ -1,14 +1,14 @@
 name: Build LUBESTATION site
 
-# Type-checks and builds web/ on every push and pull request, and keeps the ready-to-upload
-# public_html contents as a downloadable artifact. Deployment to the ParsPack host is manual
-# (see web/README.md).
+# Type-checks and builds dst/lubestation-site/web on every push and pull request, and keeps the
+# ready-to-upload public_html contents as a downloadable artifact. Deployment to the ParsPack host
+# is manual (see dst/lubestation-site/web/README.md).
 
 on:
   push:
-    paths: ["web/**", ".github/workflows/build.yml"]
+    paths: ["dst/lubestation-site/web/**", ".github/workflows/build.yml"]
   pull_request:
-    paths: ["web/**", ".github/workflows/build.yml"]
+    paths: ["dst/lubestation-site/web/**", ".github/workflows/build.yml"]
   workflow_dispatch: {}
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web
+        working-directory: dst/lubestation-site/web
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: dst/lubestation-site/web/package-lock.json
 
       - run: npm ci
 
@@ -37,5 +37,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lubestation-public_html
-          path: web/dist
+          path: dst/lubestation-site/web/dist
           include-hidden-files: true
