@@ -44,7 +44,10 @@ Old addresses (`/#/…` and `*.html`) redirect to these.
 
 ## Users
 
-Roles: `viewer` ("کاربر", sees the dashboards) and `admin` (also `/admin`). On a fresh install the
+Access is set per user and per page on `/admin`: management dashboard, technical support and
+system admin (which implies all pages); public pages are open to everyone. The server sends each
+user only the workbook sheets their pages need, so e.g. technician details never reach a
+dashboard-only user (needs the ZipArchive and DOM PHP extensions, standard on shared hosts). On a fresh install the
 first visit to a protected page shows a form that creates the first admin; later users are
 added on `/admin`. Accounts live in `api/storage/users.json` (bcrypt hashes); sessions are
 HttpOnly, SameSite=Strict cookies. Logins are throttled (8 failures → 15 minutes).

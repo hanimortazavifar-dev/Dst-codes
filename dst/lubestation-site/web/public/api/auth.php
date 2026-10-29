@@ -92,6 +92,7 @@ if ($action === 'setup') {
         'phone' => $phone,
         'name' => trim((string) ($body['name'] ?? '')),
         'role' => 'admin',
+        'pages' => LS_PAGES,
         'hash' => password_hash(check_new_password($body['password'] ?? ''), PASSWORD_DEFAULT),
         'created' => gmdate('c'),
     ];

@@ -1,23 +1,113 @@
 /**
  * In-memory stand-in for public/api/*.php, used by `npm run dev` and `vite preview` so the site can
- * be exercised without PHP. Same endpoints, payloads and error shapes; nothing is persisted, and
- * it starts with no users (so the first-admin setup screen shows) and the sample template as data.
- * Production always uses the PHP files.
+ * be exercised without PHP. Same endpoints, payloads, access rules and error shapes; nothing is
+ * persisted, and it starts with no users (so the first-admin setup screen shows) and the sample
+ * template as data. Production always uses the PHP files.
  */
 import { readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { randomBytes } from "node:crypto";
+import { crc32, inflateRawSync } from "node:zlib";
 import type { Plugin } from "vite";
+import { titleKey } from "../src/data/schema.ts";
+
+type Page = "governance" | "support" | "admin";
 
 interface User {
   id: string;
   phone: string;
   name: string;
-  role: "admin" | "viewer";
+  pages: Page[];
   password: string;
 }
 
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const PAGES: Page[] = ["governance", "support", "admin"];
+// Keep in sync with LS_PAGE_SHEETS in public/api/_lib.php.
+const PAGE_SHEETS: Record<"governance" | "support", string[]> = {
+  governance: ["جایگاه‌ها", "مصرف هفتگی", "تنظیمات"],
+  support: ["هشدارها", "تجهیزات", "سرویس‌ها", "قطعات یدکی", "تنظیمات"],
+};
+
+const cleanPages = (pages: unknown): Page[] => {
+  const list = Array.isArray(pages) ? PAGES.filter((p) => pages.includes(p)) : [];
+  return list.includes("admin") ? [...PAGES] : list;
+};
+const isAdmin = (u: User) => u.pages.includes("admin");
+
+/** Reads every zip entry (xlsx files are small). */
+function unzip(buf: Buffer) {
+  const files = new Map<string, Buffer>();
+  const eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  let p = buf.readUInt32LE(eocd + 16);
+  for (let n = buf.readUInt16LE(eocd + 10); n > 0; n--) {
+    const method = buf.readUInt16LE(p + 10);
+    const size = buf.readUInt32LE(p + 20);
+    const nameLen = buf.readUInt16LE(p + 28);
+    const local = buf.readUInt32LE(p + 42);
+    const name = buf.subarray(p + 46, p + 46 + nameLen).toString("utf8");
+    p += 46 + nameLen + buf.readUInt16LE(p + 30) + buf.readUInt16LE(p + 32);
+    const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
+    const raw = buf.subarray(start, start + size);
+    files.set(name, method === 8 ? inflateRawSync(raw) : raw);
+  }
+  return files;
+}
+
+/** Writes an uncompressed zip. */
+function zipStore(files: Map<string, Buffer>) {
+  const parts: Buffer[] = [];
+  const central: Buffer[] = [];
+  let offset = 0;
+  for (const [name, data] of files) {
+    const nameBuf = Buffer.from(name, "utf8");
+    const crc = crc32(data);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0x0800, 6);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(data.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(nameBuf.length, 26);
+    parts.push(local, nameBuf, data);
+    const c = Buffer.alloc(46);
+    c.writeUInt32LE(0x02014b50, 0);
+    c.writeUInt16LE(20, 4);
+    c.writeUInt16LE(20, 6);
+    c.writeUInt16LE(0x0800, 8);
+    c.writeUInt32LE(crc, 16);
+    c.writeUInt32LE(data.length, 20);
+    c.writeUInt32LE(data.length, 24);
+    c.writeUInt16LE(nameBuf.length, 28);
+    c.writeUInt32LE(offset, 42);
+    central.push(c, nameBuf);
+    offset += 30 + nameBuf.length + data.length;
+  }
+  const cd = Buffer.concat(central);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(files.size, 8);
+  end.writeUInt16LE(files.size, 10);
+  end.writeUInt32LE(cd.length, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...parts, cd, end]);
+}
+
+/**
+ * Drops the sheets a user's pages don't need from workbook.xml, as the PHP API does (the PHP
+ * version also inlines shared strings so no text of removed sheets remains; dev data is not secret).
+ */
+function filterWorkbook(bytes: Buffer, keys: Set<string>) {
+  const files = unzip(bytes);
+  const wb = files.get("xl/workbook.xml")!.toString("utf8");
+  const kept = wb.replace(/<(?:\w+:)?sheet\b[^>]*\bname="([^"]*)"[^>]*\/>/g, (tag, name: string) => {
+    const decoded = name.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+    return keys.has(titleKey(decoded)) ? tag : "";
+  });
+  files.set("xl/workbook.xml", Buffer.from(kept, "utf8"));
+  return zipStore(files);
+}
 
 export function apiMock(templatePath: string): Plugin {
   const users: User[] = [];
@@ -25,7 +115,7 @@ export function apiMock(templatePath: string): Plugin {
   let data: { bytes: Buffer; updatedAt: string; uploadedBy: string } = { bytes: readFileSync(templatePath), updatedAt: new Date().toISOString(), uploadedBy: "نمونه" };
   let remote: { url: string; bytes: Buffer | null; fetchedAt: string | null } = { url: "", bytes: null, fetchedAt: null };
 
-  const pub = (u: User) => ({ id: u.id, phone: u.phone, name: u.name, role: u.role });
+  const pub = (u: User) => ({ id: u.id, phone: u.phone, name: u.name, role: isAdmin(u) ? "admin" : "viewer", pages: u.pages });
 
   async function body(req: IncomingMessage): Promise<Buffer> {
     const chunks: Buffer[] = [];
@@ -82,9 +172,9 @@ export function apiMock(templatePath: string): Plugin {
       raw = await body(req);
       if ((req.headers["content-type"] ?? "").startsWith("application/json")) input = JSON.parse(raw.toString("utf8") || "{}");
     }
-    const needUser = (role: "viewer" | "admin" = "viewer") => {
+    const needUser = (page: Page | "" = "") => {
       if (!me) return fail(res, "ابتدا وارد سامانه شوید.", 401), false;
-      if (role === "admin" && me.role !== "admin") return fail(res, "شما مجوز این کار را ندارید.", 403), false;
+      if (page && !me.pages.includes(page)) return fail(res, "شما مجوز این کار را ندارید.", 403), false;
       return true;
     };
 
@@ -105,7 +195,7 @@ export function apiMock(templatePath: string): Plugin {
         if (users.length) return fail(res, "مدیر سامانه قبلاً ساخته شده است.", 409);
         if (!/^09\d{9}$/.test(String(input.phone))) return fail(res, "شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.");
         if (String(input.password ?? "").length < 8) return fail(res, "رمز عبور باید دست‌کم ۸ کاراکتر باشد.");
-        const u: User = { id: randomBytes(8).toString("hex"), phone: String(input.phone), name: String(input.name ?? ""), role: "admin", password: String(input.password) };
+        const u: User = { id: randomBytes(8).toString("hex"), phone: String(input.phone), name: String(input.name ?? ""), pages: [...PAGES], password: String(input.password) };
         users.push(u);
         signIn(res, u);
         return json(res, { user: pub(u) });
@@ -126,21 +216,33 @@ export function apiMock(templatePath: string): Plugin {
       if (input.action === "create") {
         if (!/^09\d{9}$/.test(String(input.phone))) return fail(res, "شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.");
         if (users.some((u) => u.phone === input.phone)) return fail(res, "کاربری با این شماره موبایل وجود دارد.", 409);
+        const pages = cleanPages(input.pages);
+        if (!pages.length) return fail(res, "دست‌کم دسترسی به یک صفحه را انتخاب کنید.");
         if (String(input.password ?? "").length < 8) return fail(res, "رمز عبور باید دست‌کم ۸ کاراکتر باشد.");
-        users.push({ id: randomBytes(8).toString("hex"), phone: String(input.phone), name: String(input.name ?? ""), role: input.role === "admin" ? "admin" : "viewer", password: String(input.password) });
+        users.push({ id: randomBytes(8).toString("hex"), phone: String(input.phone), name: String(input.name ?? ""), pages, password: String(input.password) });
         return list();
       }
       const u = users.find((x) => x.id === input.id);
       if (!u) return fail(res, "کاربر پیدا نشد.", 404);
-      const admins = users.filter((x) => x.role === "admin").length;
+      const admins = users.filter(isAdmin).length;
       if (input.action === "update") {
-        if (input.role && input.role !== "admin" && u.role === "admin" && admins <= 1) return fail(res, "سامانه باید دست‌کم یک مدیر داشته باشد.");
-        if (input.role) u.role = input.role === "admin" ? "admin" : "viewer";
-        if (input.password) u.password = String(input.password);
+        if (typeof input.name === "string") u.name = input.name.trim();
+        if (input.pages !== undefined) {
+          const pages = cleanPages(input.pages);
+          const losesAdmin = isAdmin(u) && !pages.includes("admin");
+          if (losesAdmin && u.id === me!.id) return fail(res, "نمی‌توانید دسترسی مدیریت را از حساب خودتان بردارید.");
+          if (losesAdmin && admins <= 1) return fail(res, "سامانه باید دست‌کم یک مدیر داشته باشد.");
+          u.pages = pages;
+        }
+        if (input.password) {
+          if (String(input.password).length < 8) return fail(res, "رمز عبور باید دست‌کم ۸ کاراکتر باشد.");
+          u.password = String(input.password);
+        }
         return list();
       }
       if (input.action === "delete") {
         if (u.id === me!.id) return fail(res, "نمی‌توانید حساب خودتان را حذف کنید.");
+        if (isAdmin(u) && admins <= 1) return fail(res, "سامانه باید دست‌کم یک مدیر داشته باشد.");
         users.splice(users.indexOf(u), 1);
         return list();
       }
@@ -162,8 +264,11 @@ export function apiMock(templatePath: string): Plugin {
         if (!needUser()) return;
         let stale = false;
         if (remote.url) stale = (await fetchRemote(remote.url)) !== null;
-        const bytes = remote.url ? remote.bytes : data.bytes;
+        let bytes = remote.url ? remote.bytes : data.bytes;
         if (!bytes) return fail(res, "فایل آنلاین هنوز دریافت نشده است.", 502);
+        const allowed = (Object.keys(PAGE_SHEETS) as (keyof typeof PAGE_SHEETS)[]).filter((p) => me!.pages.includes(p) || isAdmin(me!));
+        if (!allowed.length) return fail(res, "شما به هیچ صفحهٔ داده‌ای دسترسی ندارید.", 403);
+        if (allowed.length < Object.keys(PAGE_SHEETS).length) bytes = filterWorkbook(bytes, new Set(allowed.flatMap((p) => PAGE_SHEETS[p]).map(titleKey)));
         res.setHeader("Content-Type", XLSX_TYPE);
         res.setHeader("Cache-Control", "no-store");
         res.setHeader("X-Data-Updated", (remote.url ? remote.fetchedAt : data.updatedAt) ?? "");

@@ -85,7 +85,7 @@ const router = createBrowserRouter(
           path: ROUTES.governance,
           element: (
             <Page title="مدیریت مخازن — LUBESTATION" noindex>
-              <RequireRole role="viewer">
+              <RequireRole page="governance">
                 <CorporateGovernance />
               </RequireRole>
             </Page>
@@ -103,7 +103,7 @@ const router = createBrowserRouter(
           path: ROUTES.support,
           element: (
             <Page title="پشتیبانی فنی — LUBESTATION" noindex>
-              <RequireRole role="viewer">
+              <RequireRole page="support">
                 <TechnicalSupport />
               </RequireRole>
             </Page>
@@ -129,7 +129,7 @@ const router = createBrowserRouter(
           path: ROUTES.admin,
           element: (
             <Page title="مدیریت سامانه — LUBESTATION" noindex>
-              <RequireRole role="admin">
+              <RequireRole page="admin">
                 <Admin />
               </RequireRole>
             </Page>

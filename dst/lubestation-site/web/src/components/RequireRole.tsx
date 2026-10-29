@@ -1,20 +1,21 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { hasAccess, ROLE_LABEL, useAuth, type Role } from "../lib/auth";
-import { ROUTES } from "../routes";
+import { hasAccess, ROLE_LABEL, useAuth } from "../lib/auth";
+import { ROUTES, type PageKey } from "../routes";
 import styles from "./RequireRole.module.css";
 
 interface Props {
-  role: Role;
+  /** The protected page being shown; the user needs access to it (set per user on /admin). */
+  page: PageKey;
   children: ReactNode;
 }
 
 /**
- * Renders its children only for a signed-in user with the required role; otherwise shows the
- * login card (or, on a fresh install, the form that creates the first admin). The data itself is
- * protected on the server: the API only hands the Excel file to signed-in users.
+ * Renders its children only for a signed-in user who was given `page`; otherwise shows the login
+ * card (or, on a fresh install, the form that creates the first admin). The data itself is
+ * protected on the server: the API only hands each user the sheets their pages need.
  */
-export default function RequireRole({ role, children }: Props) {
+export default function RequireRole({ page, children }: Props) {
   const { state, retry } = useAuth();
 
   if (state.status === "loading") return <div className={styles.overlay} aria-busy="true" />;
@@ -33,7 +34,7 @@ export default function RequireRole({ role, children }: Props) {
     );
   }
 
-  if (state.status === "signedIn" && hasAccess(state.profile.role, role)) {
+  if (state.status === "signedIn" && hasAccess(state.profile, page)) {
     return (
       <>
         {children}

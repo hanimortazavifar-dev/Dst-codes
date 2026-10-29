@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { invalidateDashboard } from "../data/useDashboard";
+import type { PageKey } from "../routes";
 import { ApiError, getJson, postJson } from "./api";
 import { toAsciiDigits } from "./jalali";
 
+/** Derived by the server: "admin" when the user has the admin page. */
 export type Role = "admin" | "viewer";
 
 export interface Profile {
@@ -9,6 +12,7 @@ export interface Profile {
   phone: string;
   name: string;
   role: Role;
+  pages: PageKey[];
 }
 
 type AuthState =
@@ -58,6 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!password) return "رمز عبور را وارد کنید.";
     try {
       const { user } = await postJson<{ user: Profile }>("auth.php", { action: "login", phone: normalizePhone(phone), password });
+      // The data file is filtered per user, so never reuse one fetched for someone else.
+      invalidateDashboard();
       setState({ status: "signedIn", profile: user });
       return null;
     } catch (e) {
@@ -86,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await postJson("auth.php", { action: "logout" });
     } finally {
+      invalidateDashboard();
       setState({ status: "signedOut", setupNeeded: false });
     }
   }, []);
@@ -105,5 +112,5 @@ export function useAuth() {
   return ctx;
 }
 
-/** "viewer" accepts every signed-in user; "admin" only admins. */
-export const hasAccess = (role: Role, required: Role) => required === "viewer" || role === "admin";
+/** Whether the user was given `page` (admins have every page). */
+export const hasAccess = (profile: Profile, page: PageKey) => profile.pages.includes(page) || profile.pages.includes("admin");

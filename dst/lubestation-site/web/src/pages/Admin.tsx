@@ -6,11 +6,11 @@ import { HomeIcon } from "../components/icons";
 import { invalidateDashboard, useDashboard } from "../data/useDashboard";
 import { parseWorkbook, type DashboardData, type Issue } from "../data/workbook";
 import { ApiError, getJson, postForm, postJson } from "../lib/api";
-import { isValidPhone, normalizePhone, ROLE_LABEL, useAuth, type Profile, type Role } from "../lib/auth";
+import { isValidPhone, normalizePhone, useAuth, type Profile } from "../lib/auth";
 import { fa } from "../lib/format";
 import { formatJalaliDateTime } from "../lib/jalali";
 import { XlsxError } from "../lib/xlsx";
-import { ROUTES } from "../routes";
+import { PAGE_LIST, ROUTES, type PageKey } from "../routes";
 import styles from "./Admin.module.css";
 
 const TEMPLATE_URL = `${import.meta.env.BASE_URL}lubestation-data-template.xlsx`;
@@ -242,12 +242,65 @@ function SourceSection({ meta, onChanged }: { meta: Meta | null; onChanged: () =
   );
 }
 
+const ALL_PAGES = PAGE_LIST.flatMap((p) => (p.key ? [p.key] : []));
+
+/** Adds or removes one page; granting "admin" grants every page (as the server does). */
+function togglePage(pages: PageKey[], key: PageKey, on: boolean): PageKey[] {
+  if (on) return key === "admin" ? [...ALL_PAGES] : ALL_PAGES.filter((k) => k === key || pages.includes(k));
+  return pages.filter((k) => k !== key);
+}
+
+/**
+ * One cell per site page: public pages are always open, protected ones get a checkbox. With
+ * "admin" ticked the other boxes are shown ticked and locked, since admins see everything.
+ */
+function PageCells({ pages, disabled, lockAdmin, who, onToggle, Cell }: {
+  pages: PageKey[];
+  disabled: boolean;
+  /** Stops an admin from removing their own admin access. */
+  lockAdmin: boolean;
+  who: string;
+  onToggle: (key: PageKey, on: boolean) => void;
+  Cell: "td" | "label";
+}) {
+  const admin = pages.includes("admin");
+  return (
+    <>
+      {PAGE_LIST.map((p) => {
+        const inner = !p.key ? (
+          <span className={styles.public} title="صفحهٔ عمومی؛ همه می‌بینند">
+            ✓ عمومی
+          </span>
+        ) : (
+          <input
+            type="checkbox"
+            aria-label={`دسترسی ${who} به ${p.label}`}
+            checked={admin || pages.includes(p.key)}
+            disabled={disabled || (p.key !== "admin" && admin) || (p.key === "admin" && lockAdmin)}
+            onChange={(e) => onToggle(p.key!, e.target.checked)}
+          />
+        );
+        return Cell === "td" ? (
+          <td key={p.path} className={styles.pageCell}>
+            {inner}
+          </td>
+        ) : (
+          <label key={p.path} className={styles.pageOption}>
+            {inner}
+            <span>{p.label}</span>
+          </label>
+        );
+      })}
+    </>
+  );
+}
+
 function UsersSection() {
   const { state } = useAuth();
   const me = state.status === "signedIn" ? state.profile : null;
   const [users, setUsers] = useState<Profile[]>([]);
   const [result, setResult] = useState<{ ok?: string; error?: string }>({});
-  const [form, setForm] = useState({ name: "", phone: "", role: "viewer" as Role, password: "" });
+  const [form, setForm] = useState({ name: "", phone: "", pages: ["governance"] as PageKey[], password: "" });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -276,7 +329,12 @@ function UsersSection() {
     e.preventDefault();
     if (!isValidPhone(form.phone)) return setResult({ error: "شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود." });
     if (form.password.length < 8) return setResult({ error: "رمز عبور باید دست‌کم ۸ کاراکتر باشد." });
-    if (await act({ action: "create", ...form, phone: normalizePhone(form.phone) }, "کاربر ساخته شد.")) setForm({ name: "", phone: "", role: "viewer", password: "" });
+    if (!form.pages.length) return setResult({ error: "دست‌کم دسترسی به یک صفحه را انتخاب کنید." });
+    if (await act({ action: "create", ...form, phone: normalizePhone(form.phone) }, "کاربر ساخته شد.")) setForm({ name: "", phone: "", pages: ["governance"], password: "" });
+  }
+
+  function setPages(u: Profile, key: PageKey, on: boolean) {
+    act({ action: "update", id: u.id, pages: togglePage(u.pages, key, on) }, "دسترسی کاربر به‌روز شد.");
   }
 
   function resetPassword(u: Profile) {
@@ -293,14 +351,21 @@ function UsersSection() {
   return (
     <section className={g.panel}>
       <h2 className={g.h}>کاربران</h2>
-      <p className={styles.muted}>«کاربر» داشبوردها را می‌بیند. «مدیر سیستم» علاوه بر آن به همین صفحه (فایل داده و کاربران) دسترسی دارد.</p>
+      <p className={styles.muted}>
+        برای هر کاربر مشخص کنید کدام صفحه‌ها را ببیند. صفحه‌های عمومی را همه می‌بینند. «مدیریت سامانه» یعنی دسترسی به همهٔ صفحه‌ها، از جمله همین صفحه (فایل داده و کاربران).
+        کاربر فقط داده‌های صفحه‌هایی را که اجازه دارد از سرور دریافت می‌کند.
+      </p>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
             <tr>
               <th>نام</th>
               <th>شماره موبایل</th>
-              <th>نقش</th>
+              {PAGE_LIST.map((p) => (
+                <th key={p.path} className={styles.pageCell}>
+                  {p.label}
+                </th>
+              ))}
               <th />
             </tr>
           </thead>
@@ -309,20 +374,7 @@ function UsersSection() {
               <tr key={u.id}>
                 <td>{u.name || "—"}</td>
                 <td dir="ltr">{u.phone}</td>
-                <td>
-                  <select
-                    value={u.role}
-                    disabled={busy || u.id === me?.id}
-                    aria-label={`نقش ${u.name || u.phone}`}
-                    onChange={(e) => act({ action: "update", id: u.id, role: e.target.value }, "نقش کاربر تغییر کرد.")}
-                  >
-                    {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-                      <option key={r} value={r}>
-                        {ROLE_LABEL[r]}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+                <PageCells Cell="td" pages={u.pages} disabled={busy} lockAdmin={u.id === me?.id} who={u.name || u.phone} onToggle={(key, on) => setPages(u, key, on)} />
                 <td className={styles.actions}>
                   <button type="button" disabled={busy} onClick={() => resetPassword(u)}>
                     تغییر رمز
@@ -343,14 +395,11 @@ function UsersSection() {
       <form className={styles.grid} onSubmit={create} noValidate>
         <input className={styles.input} placeholder="نام و نام خانوادگی" aria-label="نام و نام خانوادگی" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input className={styles.input} type="tel" inputMode="numeric" dir="ltr" placeholder="09xxxxxxxxx" aria-label="شماره موبایل" maxLength={11} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-        <select className={styles.input} aria-label="نقش" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
-          {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-            <option key={r} value={r}>
-              {ROLE_LABEL[r]}
-            </option>
-          ))}
-        </select>
         <input className={styles.input} type="password" autoComplete="new-password" placeholder="رمز عبور (دست‌کم ۸ کاراکتر)" aria-label="رمز عبور" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <fieldset className={styles.pagesField}>
+          <legend>دسترسی به صفحه‌ها</legend>
+          <PageCells Cell="label" pages={form.pages} disabled={busy} lockAdmin={false} who="کاربر جدید" onToggle={(key, on) => setForm({ ...form, pages: togglePage(form.pages, key, on) })} />
+        </fieldset>
         <button type="submit" className={g.btn} disabled={busy}>
           افزودن
         </button>

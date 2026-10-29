@@ -141,9 +141,56 @@ function save_users(array $users): void
     write_json_file('users.json', ['users' => array_values($users)]);
 }
 
+// --- page access ----------------------------------------------------------------------------
+
+/** Protected pages a user can be given (keys match src/routes.ts). "admin" implies all of them. */
+const LS_PAGES = ['governance', 'support', 'admin'];
+
+/** Workbook sheets each data page needs (titles as in src/data/schema.ts). */
+const LS_PAGE_SHEETS = [
+    'governance' => ['جایگاه‌ها', 'مصرف هفتگی', 'تنظیمات'],
+    'support' => ['هشدارها', 'تجهیزات', 'سرویس‌ها', 'قطعات یدکی', 'تنظیمات'],
+];
+
+/** Same normalization as titleKey() in src/data/schema.ts. */
+function title_key(string $s): string
+{
+    $s = (string) preg_replace('/\(.*?\)/u', '', $s);
+    $s = str_replace(['ي', 'ك'], ['ی', 'ک'], $s);
+    $s = (string) preg_replace('/[\s\x{200c}\x{200d}\x{200e}\x{200f}\x{00a0}_\-–:.]/u', '', $s);
+    return strtolower($s);
+}
+
+/** Valid, de-duplicated page list; "admin" expands to every page. */
+function clean_pages($pages): array
+{
+    $pages = is_array($pages) ? array_values(array_intersect(LS_PAGES, $pages)) : [];
+    return in_array('admin', $pages, true) ? LS_PAGES : $pages;
+}
+
+/** Pages of a stored user (accounts from before per-page access fall back to their role). */
+function user_pages(array $u): array
+{
+    if (isset($u['pages']) && is_array($u['pages'])) {
+        return clean_pages($u['pages']);
+    }
+    return ($u['role'] ?? '') === 'admin' ? LS_PAGES : ['governance', 'support'];
+}
+
+function is_admin(array $u): bool
+{
+    return in_array('admin', user_pages($u), true);
+}
+
 function public_user(array $u): array
 {
-    return ['id' => $u['id'], 'phone' => $u['phone'], 'name' => $u['name'] ?? '', 'role' => $u['role']];
+    return [
+        'id' => $u['id'],
+        'phone' => $u['phone'],
+        'name' => $u['name'] ?? '',
+        'role' => is_admin($u) ? 'admin' : 'viewer',
+        'pages' => user_pages($u),
+    ];
 }
 
 function normalize_phone($phone): string
@@ -170,12 +217,7 @@ function check_new_password($password): string
     return $password;
 }
 
-function valid_role($role): string
-{
-    return in_array($role, ['admin', 'viewer'], true) ? $role : 'viewer';
-}
-
-/** The signed-in user, re-read from storage so role changes and deletions apply immediately. */
+/** The signed-in user, re-read from storage so access changes and deletions apply immediately. */
 function current_user(): ?array
 {
     start_session();
@@ -192,14 +234,14 @@ function current_user(): ?array
     return null;
 }
 
-/** $role 'viewer' admits every signed-in user; 'admin' only admins. */
-function require_user(string $role = 'viewer'): array
+/** '' admits every signed-in user; a page key ('admin', 'governance', …) only users given that page. */
+function require_user(string $page = ''): array
 {
     $user = current_user();
     if (!$user) {
         fail('ابتدا وارد سامانه شوید.', 401);
     }
-    if ($role === 'admin' && $user['role'] !== 'admin') {
+    if ($page !== '' && !in_array($page, user_pages($user), true)) {
         fail('شما مجوز این کار را ندارید.', 403);
     }
     return $user;

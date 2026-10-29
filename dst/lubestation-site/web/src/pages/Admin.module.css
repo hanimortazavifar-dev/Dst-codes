@@ -147,6 +147,78 @@
   text-align: right;
 }
 
+/* ---- page access ---- */
+.table .pageCell {
+  padding-inline: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.table th.pageCell {
+  min-width: 62px;
+  font-size: 11.5px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.pageCell input,
+.pageOption input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--amber);
+  cursor: pointer;
+}
+
+.pageCell input:disabled,
+.pageOption input:disabled {
+  cursor: default;
+}
+
+.public {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.pagesField {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 14px 12px;
+  border: 1px solid var(--grey);
+  border-radius: 10px;
+}
+
+.pagesField legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.pageOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pageOption .public {
+  display: none;
+}
+
+.pageOption:has(.public) {
+  color: var(--muted);
+  cursor: default;
+}
+
+.pageOption:has(.public)::before {
+  content: "✓";
+  color: var(--muted);
+}
+
 .actions {
   display: flex;
   gap: 8px;

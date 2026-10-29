@@ -35,8 +35,8 @@ React + Vite + TypeScript single-page app with clean URLs (`createBrowserRouter`
 
 ## 3. Login gate pattern (`RequireRole`)
 
-- Wrap the page element in `src/App.tsx`: `<RequireRole role="viewer">` (any signed-in user) or `role="admin"`. Mark the `Page` `noindex` and add the path to `public/robots.txt` Disallow.
-- Protection is real on the server: `api/data.php` serves the workbook only to signed-in users, `api/users.php` only to admins. Any new protected data must go through the API the same way — never into `public/` or the JS bundle.
+- Access is per page, granted per user on `/admin`. A new protected page needs a key in `PageKey`/`PAGE_LIST` (`src/routes.ts`), the same key in `LS_PAGES` (and, if it reads workbook sheets, `LS_PAGE_SHEETS`) in `public/api/_lib.php`, and the same in `dev/apiMock.ts`. Then wrap it in `src/App.tsx`: `<RequireRole page="mykey">`. Mark the `Page` `noindex` and add the path to `public/robots.txt` Disallow. "admin" implies every page.
+- Protection is real on the server: `api/data.php` sends each user only the workbook sheets their pages need (other sheets, and their text, are stripped out), `api/users.php` only answers admins. Any new protected data must go through the API the same way — never into `public/` or the JS bundle.
 - **Only gate pages that actually need it.** A picker/listing page stays open.
 
 ## 4. API conventions (`public/api/`)
