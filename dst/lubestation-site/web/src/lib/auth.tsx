@@ -73,6 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({ status: "signedIn", profile: user });
       return null;
     } catch (e) {
+      // Someone created the first admin meanwhile (e.g. in another tab): show the login form instead.
+      if (e instanceof ApiError && e.status === 409) {
+        setState({ status: "signedOut", setupNeeded: false });
+        return null;
+      }
       return message(e);
     }
   }, []);
