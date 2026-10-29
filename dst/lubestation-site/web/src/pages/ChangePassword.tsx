@@ -64,8 +64,7 @@ export default function ChangePassword() {
           </div>
         </header>
 
-        <section className={styles.wrap}>
-          <h2 className={g.h}>تغییر رمز عبور</h2>
+        <section className={styles.wrap} aria-label="تغییر رمز عبور">
           <form className={`${g.panel} ${styles.form}`} onSubmit={submit} noValidate>
             {profile && (
               <p className={styles.who}>
