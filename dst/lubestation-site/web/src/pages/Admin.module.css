@@ -235,3 +235,51 @@
   border-color: var(--red);
   color: #ff8d90;
 }
+
+/* Password / delete box under the users table. */
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--amber);
+  border-radius: 12px;
+  background: var(--surface2);
+  font-size: 13px;
+}
+
+.editor .input {
+  flex: 1 1 200px;
+  max-width: 280px;
+}
+
+.editor button {
+  padding: 8px 14px;
+  border: 1px solid var(--grey);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.editor .primary {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #1b1405;
+  font-weight: 800;
+}
+
+.editorDanger {
+  border-color: var(--red);
+}
+
+.editor .danger {
+  border-color: var(--red);
+  background: var(--red);
+  color: #fff;
+  font-weight: 800;
+}

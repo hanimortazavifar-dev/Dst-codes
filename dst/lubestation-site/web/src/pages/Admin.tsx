@@ -350,15 +350,89 @@ function UsersSection() {
     act({ action: "update", id: u.id, pages: togglePage(u.pages, key, on) }, "دسترسی کاربر به‌روز شد.");
   }
 
-  function resetPassword(u: Profile) {
-    const password = window.prompt(`رمز جدید برای ${u.name || u.phone} (دست‌کم ۸ کاراکتر):`);
-    if (password == null) return;
-    if (password.length < 8) return setResult({ error: "رمز عبور باید دست‌کم ۸ کاراکتر باشد." });
-    act({ action: "update", id: u.id, password }, "رمز عبور تغییر کرد.");
+  // Inline row controls instead of window.prompt/confirm, which embedded and some mobile browsers block.
+  const [editing, setEditing] = useState<{ id: string; mode: "password" | "delete" } | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+
+  function startEdit(id: string, mode: "password" | "delete") {
+    setEditing({ id, mode });
+    setNewPassword("");
+    setResult({});
   }
 
-  function remove(u: Profile) {
-    if (window.confirm(`کاربر «${u.name || u.phone}» حذف شود؟`)) act({ action: "delete", id: u.id }, "کاربر حذف شد.");
+  async function savePassword(u: Profile) {
+    if (newPassword.length < 8) return setResult({ error: "رمز عبور باید دست‌کم ۸ کاراکتر باشد." });
+    if (await act({ action: "update", id: u.id, password: newPassword }, `رمز عبور ${u.name || u.phone} تغییر کرد.`)) setEditing(null);
+  }
+
+  async function remove(u: Profile) {
+    if (await act({ action: "delete", id: u.id }, `کاربر «${u.name || u.phone}» حذف شد.`)) setEditing(null);
+  }
+
+  /** Password / delete box shown under the table, so it is never hidden by the table's scroll. */
+  function editor() {
+    const u = users.find((x) => x.id === editing?.id);
+    if (!editing || !u) return null;
+    const who = u.name ? `${u.name} (${u.phone})` : u.phone;
+    if (editing.mode === "password") {
+      return (
+        <form
+          className={styles.editor}
+          onSubmit={(e) => {
+            e.preventDefault();
+            savePassword(u);
+          }}
+        >
+          <span>
+            رمز جدید برای <b>{who}</b>:
+          </span>
+          <input
+            className={styles.input}
+            type="password"
+            autoComplete="new-password"
+            placeholder="دست‌کم ۸ کاراکتر"
+            aria-label={`رمز جدید برای ${who}`}
+            value={newPassword}
+            autoFocus
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <button type="submit" className={styles.primary} disabled={busy}>
+            ذخیره
+          </button>
+          <button type="button" disabled={busy} onClick={() => setEditing(null)}>
+            انصراف
+          </button>
+        </form>
+      );
+    }
+    return (
+      <div className={`${styles.editor} ${styles.editorDanger}`}>
+        <span>
+          کاربر <b>{who}</b> حذف شود؟ این کار برگشت‌پذیر نیست.
+        </span>
+        <button type="button" className={styles.danger} disabled={busy} onClick={() => remove(u)}>
+          بله، حذف شود
+        </button>
+        <button type="button" disabled={busy} onClick={() => setEditing(null)}>
+          انصراف
+        </button>
+      </div>
+    );
+  }
+
+  function rowActions(u: Profile) {
+    return (
+      <>
+        <button type="button" disabled={busy} onClick={() => startEdit(u.id, "password")}>
+          تغییر رمز
+        </button>
+        {u.id !== me?.id && (
+          <button type="button" disabled={busy} className={styles.danger} onClick={() => startEdit(u.id, "delete")}>
+            حذف
+          </button>
+        )}
+      </>
+    );
   }
 
   return (
@@ -394,21 +468,13 @@ function UsersSection() {
                 <td>{u.name || "—"}</td>
                 <td dir="ltr">{u.phone}</td>
                 <PageCells Cell="td" pages={u.pages} disabled={busy} lockAdmin={u.id === me?.id} who={u.name || u.phone} onToggle={(key, on) => setPages(u, key, on)} />
-                <td className={styles.actions}>
-                  <button type="button" disabled={busy} onClick={() => resetPassword(u)}>
-                    تغییر رمز
-                  </button>
-                  {u.id !== me?.id && (
-                    <button type="button" disabled={busy} className={styles.danger} onClick={() => remove(u)}>
-                      حذف
-                    </button>
-                  )}
-                </td>
+                <td className={styles.actions}>{rowActions(u)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {editor()}
 
       <h3 className={styles.sub}>افزودن کاربر</h3>
       <form className={styles.grid} onSubmit={create} noValidate>
