@@ -77,7 +77,9 @@ const router = createBrowserRouter(
           path: ROUTES.home,
           element: (
             <Page title="LUBESTATION — DST" path={ROUTES.home} description="LUBESTATION: سامانه مدیریت و پایش مخازن هوشمند روغن دیزل DST در نمایندگی‌های سراسر کشور.">
-              <Home />
+              <RequireRole page="home">
+                <Home />
+              </RequireRole>
             </Page>
           ),
         },
@@ -95,7 +97,9 @@ const router = createBrowserRouter(
           path: ROUTES.partners,
           element: (
             <Page title="انتخاب نمایندگی — LUBESTATION" path={ROUTES.partners} description="نمایندگی‌های طرح روغن فله LUBESTATION در سراسر کشور.">
-              <PartnerEcosystem />
+              <RequireRole page="partners">
+                <PartnerEcosystem />
+              </RequireRole>
             </Page>
           ),
         },
@@ -113,7 +117,9 @@ const router = createBrowserRouter(
           path: ROUTES.scheme,
           element: (
             <Page title="Scheme Overview — LUBESTATION" path={ROUTES.scheme} description="معرفی طرح روغن فله LUBESTATION: ذخیره‌سازی، توزیع و پایش هوشمند روغن.">
-              <SchemeOverview />
+              <RequireRole page="scheme">
+                <SchemeOverview />
+              </RequireRole>
             </Page>
           ),
         },
@@ -121,7 +127,9 @@ const router = createBrowserRouter(
           path: ROUTES.core,
           element: (
             <Page title="Core Operations — DST" path={ROUTES.core} description="معرفی شرکت DST (Diesel Super Technology) و محصولات آن.">
-              <CoreOperations />
+              <RequireRole page="core">
+                <CoreOperations />
+              </RequireRole>
             </Page>
           ),
         },

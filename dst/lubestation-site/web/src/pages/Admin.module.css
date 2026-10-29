@@ -205,18 +205,10 @@
   cursor: pointer;
 }
 
-.pageOption .public {
-  display: none;
-}
-
-.pageOption:has(.public) {
-  color: var(--muted);
-  cursor: default;
-}
-
-.pageOption:has(.public)::before {
-  content: "✓";
-  color: var(--muted);
+.visitors td {
+  background: color-mix(in srgb, var(--amber) 7%, transparent);
+  color: var(--amber);
+  font-weight: 700;
 }
 
 .actions {

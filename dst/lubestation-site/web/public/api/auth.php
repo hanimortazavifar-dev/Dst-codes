@@ -1,6 +1,6 @@
 <?php
 /**
- * GET                                   → { user: User|null, setupNeeded: bool }
+ * GET                                   → { user: User|null, setupNeeded: bool, publicPages: string[] }
  * POST { action: "login", phone, password }
  * POST { action: "logout" }
  * POST { action: "password", current, next }   (change own password)
@@ -11,7 +11,7 @@ require __DIR__ . '/_lib.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
     $user = current_user();
-    send_json(['user' => $user ? public_user($user) : null, 'setupNeeded' => !load_users()]);
+    send_json(['user' => $user ? public_user($user) : null, 'setupNeeded' => !load_users(), 'publicPages' => public_pages()]);
 }
 
 $body = require_post();

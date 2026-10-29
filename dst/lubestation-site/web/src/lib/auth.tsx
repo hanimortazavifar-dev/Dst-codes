@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { invalidateDashboard } from "../data/useDashboard";
-import type { PageKey } from "../routes";
+import { DEFAULT_PUBLIC_PAGES, type PageKey } from "../routes";
 import { ApiError, getJson, postJson } from "./api";
 import { toAsciiDigits } from "./jalali";
 
@@ -23,6 +23,10 @@ type AuthState =
 
 interface AuthContextValue {
   state: AuthState;
+  /** Pages anyone may open without signing in (set by the admin). */
+  publicPages: PageKey[];
+  /** Updates `publicPages` after the admin changes them. */
+  setPublicPages: (pages: PageKey[]) => void;
   /** Each resolves to an error message, or null on success. */
   signIn: (phone: string, password: string) => Promise<string | null>;
   setup: (phone: string, name: string, password: string) => Promise<string | null>;
@@ -41,13 +45,17 @@ const message = (e: unknown) => (e instanceof ApiError ? e.message : "خطای �
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: "loading" });
+  // Until the server answers (or if it can't be reached), the default public pages stay open.
+  const [publicPages, setPublicPages] = useState<PageKey[]>(DEFAULT_PUBLIC_PAGES);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    getJson<{ user: Profile | null; setupNeeded: boolean }>("auth.php")
-      .then(({ user, setupNeeded }) => {
-        if (!cancelled) setState(user ? { status: "signedIn", profile: user } : { status: "signedOut", setupNeeded });
+    getJson<{ user: Profile | null; setupNeeded: boolean; publicPages: PageKey[] }>("auth.php")
+      .then(({ user, setupNeeded, publicPages }) => {
+        if (cancelled) return;
+        setPublicPages(publicPages);
+        setState(user ? { status: "signedIn", profile: user } : { status: "signedOut", setupNeeded });
       })
       .catch((e) => {
         if (!cancelled) setState({ status: "error", message: message(e) });
@@ -102,7 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAttempt((n) => n + 1);
   }, []);
 
-  const value = useMemo(() => ({ state, signIn, setup, signOut, retry }), [state, signIn, setup, signOut, retry]);
+  const value = useMemo(
+    () => ({ state, publicPages, setPublicPages, signIn, setup, signOut, retry }),
+    [state, publicPages, signIn, setup, signOut, retry],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -44,8 +44,9 @@ Old addresses (`/#/…` and `*.html`) redirect to these.
 
 ## Users
 
-Access is set per user and per page on `/admin`: management dashboard, technical support and
-system admin (which implies all pages); public pages are open to everyone. The server sends each
+Access is set per page on `/admin`, with a checkbox for every page of the site: one row for
+visitors without an account (which pages are public; defaults to the four intro pages, never the
+admin page) and one row per user ("system admin" implies all pages). The server sends each
 user only the workbook sheets their pages need, so e.g. technician details never reach a
 dashboard-only user (needs the ZipArchive and DOM PHP extensions, standard on shared hosts). On a fresh install the
 first visit to a protected page shows a form that creates the first admin; later users are

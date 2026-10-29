@@ -11,7 +11,7 @@ import { crc32, inflateRawSync } from "node:zlib";
 import type { Plugin } from "vite";
 import { titleKey } from "../src/data/schema.ts";
 
-type Page = "governance" | "support" | "admin";
+type Page = "home" | "partners" | "scheme" | "core" | "governance" | "support" | "admin";
 
 interface User {
   id: string;
@@ -22,7 +22,8 @@ interface User {
 }
 
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-const PAGES: Page[] = ["governance", "support", "admin"];
+const PAGES: Page[] = ["home", "partners", "scheme", "core", "governance", "support", "admin"];
+const DEFAULT_PUBLIC: Page[] = ["home", "partners", "scheme", "core"];
 // Keep in sync with LS_PAGE_SHEETS in public/api/_lib.php.
 const PAGE_SHEETS: Record<"governance" | "support", string[]> = {
   governance: ["جایگاه‌ها", "مصرف هفتگی", "تنظیمات"],
@@ -112,6 +113,8 @@ function filterWorkbook(bytes: Buffer, keys: Set<string>) {
 export function apiMock(templatePath: string): Plugin {
   const users: User[] = [];
   const sessions = new Map<string, string>();
+  let publicPages: Page[] = [...DEFAULT_PUBLIC];
+  const effectivePages = (u: User | null): Page[] => (u && isAdmin(u) ? [...PAGES] : PAGES.filter((p) => publicPages.includes(p) || !!u?.pages.includes(p)));
   let data: { bytes: Buffer; updatedAt: string; uploadedBy: string } = { bytes: readFileSync(templatePath), updatedAt: new Date().toISOString(), uploadedBy: "نمونه" };
   let remote: { url: string; bytes: Buffer | null; fetchedAt: string | null } = { url: "", bytes: null, fetchedAt: null };
 
@@ -179,7 +182,7 @@ export function apiMock(templatePath: string): Plugin {
     };
 
     if (endpoint === "auth.php") {
-      if (method === "GET") return json(res, { user: me ? pub(me) : null, setupNeeded: users.length === 0 });
+      if (method === "GET") return json(res, { user: me ? pub(me) : null, setupNeeded: users.length === 0, publicPages });
       const { action } = input;
       if (action === "login") {
         const u = users.find((x) => x.phone === input.phone && x.password === input.password);
@@ -211,8 +214,12 @@ export function apiMock(templatePath: string): Plugin {
 
     if (endpoint === "users.php") {
       if (!needUser("admin")) return;
-      const list = () => json(res, { users: users.map(pub) });
+      const list = () => json(res, { users: users.map(pub), publicPages });
       if (method === "GET") return list();
+      if (input.action === "public") {
+        publicPages = cleanPages(Array.isArray(input.pages) ? input.pages.filter((p) => p !== "admin") : []).filter((p) => p !== "admin");
+        return list();
+      }
       if (input.action === "create") {
         if (!/^09\d{9}$/.test(String(input.phone))) return fail(res, "شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود.");
         if (users.some((u) => u.phone === input.phone)) return fail(res, "کاربری با این شماره موبایل وجود دارد.", 409);
@@ -261,13 +268,14 @@ export function apiMock(templatePath: string): Plugin {
         });
       }
       if (method === "GET") {
-        if (!needUser()) return;
+        // Visitors get data only for data pages the admin made public.
+        const pages = effectivePages(me);
+        const allowed = (Object.keys(PAGE_SHEETS) as (keyof typeof PAGE_SHEETS)[]).filter((p) => pages.includes(p));
+        if (!allowed.length) return me ? fail(res, "شما به هیچ صفحهٔ داده‌ای دسترسی ندارید.", 403) : fail(res, "ابتدا وارد سامانه شوید.", 401);
         let stale = false;
         if (remote.url) stale = (await fetchRemote(remote.url)) !== null;
         let bytes = remote.url ? remote.bytes : data.bytes;
         if (!bytes) return fail(res, "فایل آنلاین هنوز دریافت نشده است.", 502);
-        const allowed = (Object.keys(PAGE_SHEETS) as (keyof typeof PAGE_SHEETS)[]).filter((p) => me!.pages.includes(p) || isAdmin(me!));
-        if (!allowed.length) return fail(res, "شما به هیچ صفحهٔ داده‌ای دسترسی ندارید.", 403);
         if (allowed.length < Object.keys(PAGE_SHEETS).length) bytes = filterWorkbook(bytes, new Set(allowed.flatMap((p) => PAGE_SHEETS[p]).map(titleKey)));
         res.setHeader("Content-Type", XLSX_TYPE);
         res.setHeader("Cache-Control", "no-store");

@@ -143,8 +143,11 @@ function save_users(array $users): void
 
 // --- page access ----------------------------------------------------------------------------
 
-/** Protected pages a user can be given (keys match src/routes.ts). "admin" implies all of them. */
-const LS_PAGES = ['governance', 'support', 'admin'];
+/** Every page of the site (keys match src/routes.ts). "admin" implies all of them. */
+const LS_PAGES = ['home', 'partners', 'scheme', 'core', 'governance', 'support', 'admin'];
+
+/** Pages open to visitors without an account until an admin changes it. */
+const LS_DEFAULT_PUBLIC = ['home', 'partners', 'scheme', 'core'];
 
 /** Workbook sheets each data page needs (titles as in src/data/schema.ts). */
 const LS_PAGE_SHEETS = [
@@ -168,18 +171,36 @@ function clean_pages($pages): array
     return in_array('admin', $pages, true) ? LS_PAGES : $pages;
 }
 
-/** Pages of a stored user (accounts from before per-page access fall back to their role). */
+/** Pages granted to a stored user (accounts from before per-page access fall back to their role). */
 function user_pages(array $u): array
 {
     if (isset($u['pages']) && is_array($u['pages'])) {
         return clean_pages($u['pages']);
     }
-    return ($u['role'] ?? '') === 'admin' ? LS_PAGES : ['governance', 'support'];
+    return ($u['role'] ?? '') === 'admin' ? LS_PAGES : array_merge(LS_DEFAULT_PUBLIC, ['governance', 'support']);
 }
 
 function is_admin(array $u): bool
 {
     return in_array('admin', user_pages($u), true);
+}
+
+/** Pages anyone may open without signing in (set on the admin page; never the admin page). */
+function public_pages(): array
+{
+    $saved = read_json_file('access.json', []);
+    $pages = isset($saved['public_pages']) && is_array($saved['public_pages']) ? $saved['public_pages'] : LS_DEFAULT_PUBLIC;
+    return array_values(array_diff(array_intersect(LS_PAGES, $pages), ['admin']));
+}
+
+/** What a visitor ($user null) or signed-in user may open: their own pages plus the public ones. */
+function effective_pages(?array $user): array
+{
+    $pages = $user ? user_pages($user) : [];
+    if (in_array('admin', $pages, true)) {
+        return LS_PAGES;
+    }
+    return array_values(array_intersect(LS_PAGES, array_merge($pages, public_pages())));
 }
 
 function public_user(array $u): array

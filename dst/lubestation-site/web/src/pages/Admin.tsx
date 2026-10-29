@@ -242,7 +242,8 @@ function SourceSection({ meta, onChanged }: { meta: Meta | null; onChanged: () =
   );
 }
 
-const ALL_PAGES = PAGE_LIST.flatMap((p) => (p.key ? [p.key] : []));
+const ALL_PAGES = PAGE_LIST.map((p) => p.key);
+const NEW_USER_PAGES: PageKey[] = ["home", "partners", "scheme", "core", "governance"];
 
 /** Adds or removes one page; granting "admin" grants every page (as the server does). */
 function togglePage(pages: PageKey[], key: PageKey, on: boolean): PageKey[] {
@@ -251,14 +252,16 @@ function togglePage(pages: PageKey[], key: PageKey, on: boolean): PageKey[] {
 }
 
 /**
- * One cell per site page: public pages are always open, protected ones get a checkbox. With
- * "admin" ticked the other boxes are shown ticked and locked, since admins see everything.
+ * One checkbox per site page. With "admin" ticked the other boxes are shown ticked and locked,
+ * since admins see everything. The visitors row (`visitors`) has no admin box: that page can
+ * never be public.
  */
-function PageCells({ pages, disabled, lockAdmin, who, onToggle, Cell }: {
+function PageCells({ pages, disabled, lockAdmin, visitors, who, onToggle, Cell }: {
   pages: PageKey[];
   disabled: boolean;
   /** Stops an admin from removing their own admin access. */
   lockAdmin: boolean;
+  visitors?: boolean;
   who: string;
   onToggle: (key: PageKey, on: boolean) => void;
   Cell: "td" | "label";
@@ -267,19 +270,20 @@ function PageCells({ pages, disabled, lockAdmin, who, onToggle, Cell }: {
   return (
     <>
       {PAGE_LIST.map((p) => {
-        const inner = !p.key ? (
-          <span className={styles.public} title="صفحهٔ عمومی؛ همه می‌بینند">
-            ✓ عمومی
-          </span>
-        ) : (
-          <input
-            type="checkbox"
-            aria-label={`دسترسی ${who} به ${p.label}`}
-            checked={admin || pages.includes(p.key)}
-            disabled={disabled || (p.key !== "admin" && admin) || (p.key === "admin" && lockAdmin)}
-            onChange={(e) => onToggle(p.key!, e.target.checked)}
-          />
-        );
+        const inner =
+          visitors && p.key === "admin" ? (
+            <span className={styles.public} title="صفحهٔ مدیریت هیچ‌وقت عمومی نمی‌شود">
+              —
+            </span>
+          ) : (
+            <input
+              type="checkbox"
+              aria-label={`دسترسی ${who} به ${p.label}`}
+              checked={admin || pages.includes(p.key)}
+              disabled={disabled || (p.key !== "admin" && admin) || (p.key === "admin" && lockAdmin)}
+              onChange={(e) => onToggle(p.key, e.target.checked)}
+            />
+          );
         return Cell === "td" ? (
           <td key={p.path} className={styles.pageCell}>
             {inner}
@@ -296,25 +300,29 @@ function PageCells({ pages, disabled, lockAdmin, who, onToggle, Cell }: {
 }
 
 function UsersSection() {
-  const { state } = useAuth();
+  const { state, publicPages, setPublicPages } = useAuth();
   const me = state.status === "signedIn" ? state.profile : null;
   const [users, setUsers] = useState<Profile[]>([]);
   const [result, setResult] = useState<{ ok?: string; error?: string }>({});
-  const [form, setForm] = useState({ name: "", phone: "", pages: ["governance"] as PageKey[], password: "" });
+  const [form, setForm] = useState({ name: "", phone: "", pages: NEW_USER_PAGES, password: "" });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    getJson<{ users: Profile[] }>("users.php")
-      .then((r) => setUsers(r.users))
+    getJson<{ users: Profile[]; publicPages: PageKey[] }>("users.php")
+      .then((r) => {
+        setUsers(r.users);
+        setPublicPages(r.publicPages);
+      })
       .catch((e) => setResult({ error: errorText(e) }));
-  }, []);
+  }, [setPublicPages]);
 
   async function act(body: Record<string, unknown>, ok: string) {
     setBusy(true);
     setResult({});
     try {
-      const r = await postJson<{ users: Profile[] }>("users.php", body);
+      const r = await postJson<{ users: Profile[]; publicPages: PageKey[] }>("users.php", body);
       setUsers(r.users);
+      setPublicPages(r.publicPages);
       setResult({ ok });
       return true;
     } catch (e) {
@@ -330,7 +338,12 @@ function UsersSection() {
     if (!isValidPhone(form.phone)) return setResult({ error: "شماره موبایل باید ۱۱ رقم باشد و با ۰۹ شروع شود." });
     if (form.password.length < 8) return setResult({ error: "رمز عبور باید دست‌کم ۸ کاراکتر باشد." });
     if (!form.pages.length) return setResult({ error: "دست‌کم دسترسی به یک صفحه را انتخاب کنید." });
-    if (await act({ action: "create", ...form, phone: normalizePhone(form.phone) }, "کاربر ساخته شد.")) setForm({ name: "", phone: "", pages: ["governance"], password: "" });
+    if (await act({ action: "create", ...form, phone: normalizePhone(form.phone) }, "کاربر ساخته شد.")) setForm({ name: "", phone: "", pages: NEW_USER_PAGES, password: "" });
+  }
+
+  function setPublic(key: PageKey, on: boolean) {
+    const next = on ? ALL_PAGES.filter((k) => k === key || publicPages.includes(k)) : publicPages.filter((k) => k !== key);
+    act({ action: "public", pages: next }, on ? "این صفحه برای همه باز شد." : "این صفحه از این پس فقط با ورود و دسترسی دیده می‌شود.");
   }
 
   function setPages(u: Profile, key: PageKey, on: boolean) {
@@ -352,8 +365,8 @@ function UsersSection() {
     <section className={g.panel}>
       <h2 className={g.h}>کاربران</h2>
       <p className={styles.muted}>
-        برای هر کاربر مشخص کنید کدام صفحه‌ها را ببیند. صفحه‌های عمومی را همه می‌بینند. «مدیریت سامانه» یعنی دسترسی به همهٔ صفحه‌ها، از جمله همین صفحه (فایل داده و کاربران).
-        کاربر فقط داده‌های صفحه‌هایی را که اجازه دارد از سرور دریافت می‌کند.
+        برای هر کاربر تیک صفحه‌هایی را بزنید که اجازهٔ دیدنشان را دارد. ردیف «بازدیدکنندگان بدون ورود» تعیین می‌کند کدام صفحه‌ها برای همه، بدون ورود، باز باشد؛ بقیهٔ
+        صفحه‌ها فقط با ورود و دسترسی دیده می‌شوند. «مدیریت سامانه» یعنی دسترسی به همهٔ صفحه‌ها، از جمله همین صفحه. هر کس فقط داده‌های صفحه‌های مجاز خود را از سرور دریافت می‌کند.
       </p>
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -370,6 +383,12 @@ function UsersSection() {
             </tr>
           </thead>
           <tbody>
+            <tr className={styles.visitors}>
+              <td>بازدیدکنندگان بدون ورود</td>
+              <td>همه</td>
+              <PageCells Cell="td" visitors pages={publicPages} disabled={busy} lockAdmin who="بازدیدکنندگان بدون ورود" onToggle={setPublic} />
+              <td />
+            </tr>
             {users.map((u) => (
               <tr key={u.id}>
                 <td>{u.name || "—"}</td>

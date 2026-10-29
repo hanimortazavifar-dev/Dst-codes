@@ -151,16 +151,16 @@ function filtered_xlsx(string $src, array $keys): ?string
 }
 
 /**
- * Sends the workbook to $user: whole for admins and users with every data page, otherwise only
- * the sheets their pages need (so e.g. technician details never reach a dashboard-only user).
+ * Sheet keys the given pages may read, and whether that is every data page (= the whole file).
+ * Stops with 401/403 when none of them reads data.
  */
-function send_xlsx(array $user, string $path, string $source, string $updated, bool $stale): void
+function allowed_sheets(?array $user): array
 {
-    $pages = user_pages($user);
+    $pages = effective_pages($user);
     $keys = [];
     $full = true;
     foreach (LS_PAGE_SHEETS as $page => $titles) {
-        if (in_array($page, $pages, true) || in_array('admin', $pages, true)) {
+        if (in_array($page, $pages, true)) {
             foreach ($titles as $t) {
                 $keys[] = title_key($t);
             }
@@ -169,11 +169,21 @@ function send_xlsx(array $user, string $path, string $source, string $updated, b
         }
     }
     if (!$keys) {
-        fail('شما به هیچ صفحهٔ داده‌ای دسترسی ندارید.', 403);
+        $user ? fail('شما به هیچ صفحهٔ داده‌ای دسترسی ندارید.', 403) : fail('ابتدا وارد سامانه شوید.', 401);
     }
+    return [array_values(array_unique($keys)), $full];
+}
+
+/**
+ * Sends the workbook: whole when every data page is allowed, otherwise only the sheets the
+ * allowed pages need (so e.g. technician details never reach a dashboard-only user).
+ */
+function send_xlsx(array $access, string $path, string $source, string $updated, bool $stale): void
+{
+    [$keys, $full] = $access;
     $temp = null;
     if (!$full) {
-        $temp = filtered_xlsx($path, array_values(array_unique($keys)));
+        $temp = filtered_xlsx($path, $keys);
         if ($temp === null) {
             fail('سرور نتوانست داده‌های مجاز شما را جدا کند (افزونهٔ ZipArchive یا DOM روی هاست فعال نیست).', 500);
         }
@@ -268,21 +278,22 @@ if ($method === 'GET' && isset($_GET['meta'])) {
 }
 
 if ($method === 'GET') {
-    $user = require_user();
+    // Visitors get data only for data pages the admin made public.
+    $access = allowed_sheets(current_user());
     $url = settings()['excel_url'];
     if ($url !== '') {
         $fresh = is_file(LS_CACHE_FILE) && time() - (int) filemtime(LS_CACHE_FILE) < (int) $LS_CONFIG['cache_minutes'] * 60;
         $error = $fresh ? null : fetch_remote($url);
         clearstatcache();
         if (is_file(LS_CACHE_FILE)) {
-            send_xlsx($user, LS_CACHE_FILE, 'url', gmdate('c', (int) filemtime(LS_CACHE_FILE)), $error !== null);
+            send_xlsx($access, LS_CACHE_FILE, 'url', gmdate('c', (int) filemtime(LS_CACHE_FILE)), $error !== null);
         }
         fail($error ?? 'فایل آنلاین هنوز دریافت نشده است.', 502);
     }
     if (!is_file(LS_DATA_FILE)) {
         fail('هنوز فایل داده‌ای بارگذاری نشده است.', 404);
     }
-    send_xlsx($user, LS_DATA_FILE, 'upload', upload_meta()['updatedAt'] ?? gmdate('c', (int) filemtime(LS_DATA_FILE)), false);
+    send_xlsx($access, LS_DATA_FILE, 'upload', upload_meta()['updatedAt'] ?? gmdate('c', (int) filemtime(LS_DATA_FILE)), false);
 }
 
 if ($method === 'POST' && isset($_FILES['file'])) {

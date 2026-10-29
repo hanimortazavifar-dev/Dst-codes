@@ -5,18 +5,21 @@ import { ROUTES, type PageKey } from "../routes";
 import styles from "./RequireRole.module.css";
 
 interface Props {
-  /** The protected page being shown; the user needs access to it (set per user on /admin). */
+  /** The page being shown; access to it is set per user (and for visitors) on /admin. */
   page: PageKey;
   children: ReactNode;
 }
 
 /**
- * Renders its children only for a signed-in user who was given `page`; otherwise shows the login
- * card (or, on a fresh install, the form that creates the first admin). The data itself is
- * protected on the server: the API only hands each user the sheets their pages need.
+ * Renders its children when `page` is public or the signed-in user was given it; otherwise shows
+ * the login card (or, on a fresh install, the form that creates the first admin). The data itself
+ * is protected on the server: the API only hands out the sheets the allowed pages need.
  */
 export default function RequireRole({ page, children }: Props) {
-  const { state, retry } = useAuth();
+  const { state, publicPages, retry } = useAuth();
+
+  // Public pages: no login. While loading, the defaults stand in so the home page isn't delayed.
+  if (publicPages.includes(page) && state.status !== "signedIn") return <>{children}</>;
 
   if (state.status === "loading") return <div className={styles.overlay} aria-busy="true" />;
 
@@ -34,11 +37,12 @@ export default function RequireRole({ page, children }: Props) {
     );
   }
 
-  if (state.status === "signedIn" && hasAccess(state.profile, page)) {
+  if (state.status === "signedIn" && (hasAccess(state.profile, page) || publicPages.includes(page))) {
     return (
       <>
         {children}
-        <UserBadge />
+        {/* The badge only shows on pages that need a login, as before. */}
+        {!publicPages.includes(page) && <UserBadge />}
       </>
     );
   }

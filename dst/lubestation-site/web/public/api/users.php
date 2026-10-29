@@ -1,10 +1,12 @@
 <?php
 /**
- * Admin only. `pages` lists the protected pages a user may open (see LS_PAGES); "admin" implies all.
- * GET                                                   → { users: User[] }
+ * Admin only. `pages` lists the pages a user may open (see LS_PAGES); "admin" implies all.
+ * Pages in `publicPages` are open to everyone, signed in or not.
+ * GET                                                   → { users: User[], publicPages: string[] }
  * POST { action: "create", phone, name, pages, password }
  * POST { action: "update", id, name?, pages?, password? }
  * POST { action: "delete", id }
+ * POST { action: "public", pages }                      (pages open without signing in)
  */
 
 require __DIR__ . '/_lib.php';
@@ -12,7 +14,7 @@ require __DIR__ . '/_lib.php';
 $me = require_user('admin');
 
 $list = function (): void {
-    send_json(['users' => array_map('public_user', load_users())]);
+    send_json(['users' => array_map('public_user', load_users()), 'publicPages' => public_pages()]);
 };
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
@@ -53,6 +55,13 @@ if ($action === 'create') {
         'created' => gmdate('c'),
     ], $pages);
     save_users($users);
+    $list();
+}
+
+if ($action === 'public') {
+    // The admin page itself can never be public.
+    $pages = array_values(array_diff(clean_pages(is_array($body['pages'] ?? null) ? array_diff($body['pages'], ['admin']) : []), ['admin']));
+    write_json_file('access.json', ['public_pages' => $pages]);
     $list();
 }
 
