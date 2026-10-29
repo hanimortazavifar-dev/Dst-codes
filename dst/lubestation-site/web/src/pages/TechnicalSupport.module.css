@@ -95,12 +95,11 @@
   color: var(--amber);
 }
 
-/* ---- service history + spare parts ---- */
+/* ---- service history, then spare parts below it, both full width ---- */
 .two {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  align-items: start;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
 .tableWrap {
@@ -142,10 +141,4 @@
 .qty {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 900px) {
-  .two {
-    grid-template-columns: 1fr;
-  }
 }
