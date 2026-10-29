@@ -1,10 +1,13 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import dstLogo from "../assets/dst-logo.webp";
 import partakLogo from "../assets/partak-logo.png";
-import { ArrowIcon } from "../components/icons";
+import g from "../components/governance/Governance.module.css";
+import { ArrowIcon, HomeIcon } from "../components/icons";
 import { DEALERS } from "../data/dealers";
+import { prefersReducedMotion } from "../lib/format";
 import { ROUTES } from "../routes";
-import slate from "../styles/slate.module.css";
+import { startOrbitBackground } from "../three/orbitBackground";
 import styles from "./PartnerEcosystem.module.css";
 
 const stroke = { fill: "none", stroke: "#fff", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -47,34 +50,52 @@ const AVATARS: Record<string, { bg: string; icon: ReactNode }> = {
   },
 };
 
+/** Dealer picker, in the management pages' dark/amber theme with the orbit background. */
 export default function PartnerEcosystem() {
-  return (
-    <div className={slate.page} dir="rtl" lang="fa">
-      <div className={styles.wrap}>
-        <div className={`${slate.header} ${styles.header}`}>
-          <Link className={slate.back} to={ROUTES.home}>
-            <ArrowIcon />
-            بازگشت به صفحه اصلی
-          </Link>
-          <h1>انتخاب نمایندگی</h1>
-          <p>یکی از نمایندگی‌ها را برای مشاهده گزارش مصرف روغن بالک انتخاب کنید</p>
-        </div>
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-        <div className={styles.grid}>
-          {DEALERS.map((d) => (
-            <div key={d.slug} className={styles.dealer}>
-              <div className={styles.avatar} style={{ background: AVATARS[d.slug]?.bg }}>
-                {AVATARS[d.slug]?.icon}
-              </div>
-              <h3>{d.name}</h3>
-              <p className={styles.sub}>{d.city}</p>
-              <Link className={styles.btn} to={`${ROUTES.dealerReport}/${d.slug}`}>
-                ورود به گزارش
-                <ArrowIcon />
+  useEffect(() => {
+    if (!canvasRef.current || prefersReducedMotion()) return;
+    return startOrbitBackground(canvasRef.current);
+  }, []);
+
+  return (
+    <div className={g.page} dir="rtl" lang="fa">
+      <canvas ref={canvasRef} className={g.background} aria-hidden="true" />
+      <div className={g.wrap}>
+        <header className={g.top}>
+          <img className={g.logo} src={dstLogo} alt="DST — Diesel Super Technology" />
+          <div className={g.ttl}>
+            <h1>LUBESTATION</h1>
+            <p>انتخاب نمایندگی</p>
+          </div>
+          <div className={g.toprow}>
+            <Link className={g.homelink} to={ROUTES.home}>
+              <HomeIcon />
+              HOME
+            </Link>
+          </div>
+        </header>
+
+        <section>
+          <h2 className={g.h}>نمایندگی‌ها</h2>
+          <p className={styles.intro}>یکی از نمایندگی‌ها را برای مشاهدهٔ گزارش مصرف روغن بالک انتخاب کنید.</p>
+          <div className={styles.grid}>
+            {DEALERS.map((d) => (
+              <Link key={d.slug} className={`${g.p4} ${styles.dealer}`} to={`${ROUTES.dealerReport}/${d.slug}`}>
+                <div className={styles.avatar} style={{ background: AVATARS[d.slug]?.bg }}>
+                  {AVATARS[d.slug]?.icon}
+                </div>
+                <h3>{d.name}</h3>
+                <p className={styles.sub}>{d.city}</p>
+                <span className={styles.btn}>
+                  ورود به گزارش
+                  <ArrowIcon />
+                </span>
               </Link>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
