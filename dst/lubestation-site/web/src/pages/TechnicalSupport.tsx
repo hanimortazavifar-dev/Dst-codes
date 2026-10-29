@@ -1,12 +1,15 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import dstLogo from "../assets/dst-logo.webp";
 import DataState from "../components/DataState";
-import { ArrowIcon } from "../components/icons";
+import g from "../components/governance/Governance.module.css";
+import { HomeIcon, WrenchIcon } from "../components/icons";
 import { useDashboard, type LoadedData } from "../data/useDashboard";
 import { SEVERITY_LABEL, type Severity } from "../data/workbook";
-import { fa } from "../lib/format";
+import { fa, prefersReducedMotion } from "../lib/format";
 import { daysFromToday, formatJalali } from "../lib/jalali";
 import { ROUTES } from "../routes";
-import slate from "../styles/slate.module.css";
+import { startOrbitBackground } from "../three/orbitBackground";
 import styles from "./TechnicalSupport.module.css";
 
 function Badge({ severity, label }: { severity: Severity; label?: string }) {
@@ -29,22 +32,35 @@ function until(d: Date | null): { text: string; overdue: boolean } {
   return { text: `${fa(n)} روز دیگر`, overdue: false };
 }
 
+/** Maintenance and support overview, in the management pages' dark/amber theme. */
 export default function TechnicalSupport() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const dashboard = useDashboard();
 
-  return (
-    <div className={slate.page} dir="rtl" lang="fa">
-      <div className={styles.wrap}>
-        <Link className={slate.back} to={ROUTES.home}>
-          <ArrowIcon />
-          بازگشت به صفحه اصلی
-        </Link>
-        <div className={slate.header}>
-          <h1>پشتیبانی فنی — تعمیر و نگهداری</h1>
-          <p>وضعیت تجهیزات، هشدارهای باز، تاریخچه سرویس و موجودی قطعات یدکی همه نمایندگی‌ها</p>
-        </div>
+  useEffect(() => {
+    if (!canvasRef.current || prefersReducedMotion()) return;
+    return startOrbitBackground(canvasRef.current);
+  }, []);
 
-        {dashboard.status === "ready" ? <Support data={dashboard.data} /> : <DataState state={dashboard} reload={dashboard.reload} classes={styles} />}
+  return (
+    <div className={g.page} dir="rtl" lang="fa">
+      <canvas ref={canvasRef} className={g.background} aria-hidden="true" />
+      <div className={g.wrap}>
+        <header className={g.top}>
+          <img className={g.logo} src={dstLogo} alt="DST — Diesel Super Technology" />
+          <div className={g.ttl}>
+            <h1>LUBESTATION</h1>
+            <p>پشتیبانی فنی — تعمیر و نگهداری</p>
+          </div>
+          <div className={g.toprow}>
+            <Link className={g.homelink} to={ROUTES.home}>
+              <HomeIcon />
+              HOME
+            </Link>
+          </div>
+        </header>
+
+        {dashboard.status === "ready" ? <Support data={dashboard.data} /> : <DataState state={dashboard} reload={dashboard.reload} classes={g} />}
       </div>
     </div>
   );
@@ -54,77 +70,93 @@ function Support({ data }: { data: LoadedData }) {
   const { tickets, sites, services, parts, settings } = data;
   const equipment = sites.flatMap((s) => s.equipment);
   const health = equipment.length ? Math.round((equipment.filter((e) => e.severity === "ok").length / equipment.length) * 100) : null;
-  const kpis: { value: string; label: string; tone?: "warn" | "good" }[] = [
-    { value: fa(tickets.filter((t) => t.severity === "crit").length), label: "هشدار فوری", tone: "warn" },
-    { value: fa(tickets.filter((t) => t.severity === "warn").length), label: "نیازمند بازدید" },
-    { value: health == null ? "—" : `٪${fa(health)}`, label: "سلامت کلی تجهیزات", tone: "good" },
-    { value: settings.avgResolutionDays == null ? "—" : `${new Intl.NumberFormat("fa-IR").format(settings.avgResolutionDays)} روز`, label: "میانگین زمان رفع مشکل" },
-  ];
+  const urgent = tickets.filter((t) => t.severity === "crit").length;
+  const visit = tickets.filter((t) => t.severity === "warn").length;
 
   return (
     <>
-      {data.stale && <div className={styles.notice}>منبع آنلاین داده در دسترس نبود؛ آخرین نسخهٔ دریافت‌شده نمایش داده می‌شود.</div>}
+      {data.stale && <div className={g.notice}>منبع آنلاین داده در دسترس نبود؛ آخرین نسخهٔ دریافت‌شده نمایش داده می‌شود.</div>}
 
-      <div className={styles.kpis}>
-        {kpis.map((k) => (
-          <div key={k.label} className={`${styles.kpi} ${k.tone ? styles[k.tone] : ""}`}>
-            <b>{k.value}</b>
-            <span>{k.label}</span>
+      <section>
+        <h2 className={g.h}>نمای کلی</h2>
+        <div className={g.sum}>
+          <div className={g.kpi}>
+            <span>هشدار فوری</span>
+            <b style={{ color: urgent ? "var(--red)" : "var(--fg)" }}>{fa(urgent)}</b>
           </div>
-        ))}
-      </div>
-
-      <section className={styles.sec}>
-        <h2>هشدارهای باز (اولویت‌بندی‌شده)</h2>
-        <div className={slate.card}>
-          {tickets.length ? (
-            <div className={styles.tickets}>
-              {tickets.map((t, i) => (
-                <div key={`${t.title}-${i}`} className={`${styles.ticket} ${styles[t.severity]}`}>
-                  <div className={styles.ticketName}>
-                    <b>{t.title}</b>
-                    {t.detail && <span>{t.detail}</span>}
-                  </div>
-                  <Badge severity={t.severity} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={styles.none}>هشدار بازی ثبت نشده است.</p>
-          )}
+          <div className={g.kpi}>
+            <span>نیازمند بازدید</span>
+            <b style={{ color: visit ? "var(--amber)" : "var(--fg)" }}>{fa(visit)}</b>
+          </div>
+          <div className={g.kpi}>
+            <span>سلامت کلی تجهیزات</span>
+            <b style={{ color: "var(--green)" }}>{health == null ? "—" : `٪${fa(health)}`}</b>
+          </div>
+          <div className={g.kpi}>
+            <span>میانگین زمان رفع مشکل</span>
+            <b>
+              {settings.avgResolutionDays == null ? "—" : new Intl.NumberFormat("fa-IR").format(settings.avgResolutionDays)} <small>روز</small>
+            </b>
+          </div>
         </div>
       </section>
 
+      <section className={g.panel}>
+        <h2 className={`${g.h} ${g.hSmall}`}>هشدارهای باز (اولویت‌بندی‌شده)</h2>
+        {tickets.length ? (
+          <div className={`${g.act} ${styles.tickets}`}>
+            {tickets.map((t, i) => (
+              <div key={`${t.title}-${i}`} className={`${g.ai} ${t.severity === "crit" ? g.red : g.warn}`}>
+                <span className={g.dot} />
+                <div className={styles.ticketText}>
+                  <b>{t.title}</b>
+                  {t.detail && <div className={g.sub}>{t.detail}</div>}
+                </div>
+                <Badge severity={t.severity} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className={g.empty}>هشدار بازی ثبت نشده است.</p>
+        )}
+      </section>
+
       {sites.length > 0 && (
-        <section className={styles.sec}>
-          <h2>تجهیزات و وضعیت به تفکیک نمایندگی</h2>
+        <section>
+          <h2 className={g.h}>تجهیزات و وضعیت به تفکیک نمایندگی</h2>
           <div className={styles.sites}>
             {sites.map((s) => (
-              <div key={s.site} className={`${slate.card} ${styles.site}`}>
-                <h3>
-                  {s.site}
-                  <span className={`${styles.conn} ${s.connected ? styles.on : styles.off}`}>● {s.connected ? "متصل" : "قطع"}</span>
-                </h3>
+              <div key={s.site} className={`${g.p4} ${styles.site} ${s.connected ? "" : styles.offline}`}>
+                <div className={g.hd}>
+                  <span className={g.nm}>{s.site}</span>
+                  <span className={`${g.chip} ${s.connected ? g.ok : g.alarm}`}>● {s.connected ? "متصل" : "قطع"}</span>
+                </div>
                 <ul>
                   {s.equipment.map((e, i) => (
                     <li key={`${e.name}-${i}`}>
-                      {e.name} <Badge severity={e.severity} label={e.label} />
+                      <span>{e.name}</span>
+                      <Badge severity={e.severity} label={e.label} />
                     </li>
                   ))}
                 </ul>
-                {s.technician && <div className={styles.contact}>تکنسین محلی: {s.technician}</div>}
+                {s.technician && (
+                  <div className={styles.contact}>
+                    <WrenchIcon />
+                    تکنسین محلی: {s.technician}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </section>
       )}
 
-      <div className={`${styles.two} ${styles.sec}`}>
-        <div className={slate.card}>
-          <h2 className={styles.cardTitle}>تاریخچه سرویس</h2>
+      <div className={styles.two}>
+        <section className={g.p4}>
+          <h2 className={`${g.h} ${g.hSmall}`}>تاریخچه سرویس</h2>
           {services.length ? (
             <div className={styles.tableWrap}>
-              <table>
+              <table className={styles.table}>
                 <thead>
                   <tr>
                     <th>تجهیز</th>
@@ -149,22 +181,24 @@ function Support({ data }: { data: LoadedData }) {
               </table>
             </div>
           ) : (
-            <p className={styles.none}>سابقهٔ سرویسی ثبت نشده است.</p>
+            <p className={g.empty}>سابقهٔ سرویسی ثبت نشده است.</p>
           )}
-        </div>
-        <div className={slate.card}>
-          <h2 className={styles.cardTitle}>موجودی قطعات یدکی</h2>
+        </section>
+        <section className={g.p4}>
+          <h2 className={`${g.h} ${g.hSmall}`}>موجودی قطعات یدکی</h2>
           {parts.length ? (
-            parts.map((p, i) => (
-              <div key={`${p.name}-${i}`} className={styles.part}>
-                <span>{p.name}</span>
-                <span className={`${styles.qty} ${p.qty === 0 ? styles.red : ""}`}>{fa(p.qty)} عدد</span>
-              </div>
-            ))
+            <div>
+              {parts.map((p, i) => (
+                <div key={`${p.name}-${i}`} className={styles.part}>
+                  <span>{p.name}</span>
+                  <span className={`${styles.qty} ${p.qty === 0 ? styles.red : ""}`}>{p.qty === 0 ? "ناموجود" : `${fa(p.qty)} عدد`}</span>
+                </div>
+              ))}
+            </div>
           ) : (
-            <p className={styles.none}>قطعه‌ای ثبت نشده است.</p>
+            <p className={g.empty}>قطعه‌ای ثبت نشده است.</p>
           )}
-        </div>
+        </section>
       </div>
     </>
   );
