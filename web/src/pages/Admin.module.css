@@ -1,0 +1,173 @@
+/* Admin page: builds on the dashboard theme (Governance.module.css tokens). */
+
+.muted {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.muted a {
+  color: var(--amber);
+}
+
+.sub {
+  margin: 18px 0 8px;
+  font-size: 14px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.issues {
+  max-height: 260px;
+  margin: 0 0 12px;
+  padding-inline-start: 18px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  line-height: 1.9;
+}
+
+.okLine {
+  margin: 0 0 12px;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.bad {
+  color: #ff8d90;
+}
+
+.warnText {
+  color: var(--amber);
+}
+
+.msg {
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.msg.bad {
+  border: 1px solid color-mix(in srgb, var(--red) 50%, transparent);
+  background: color-mix(in srgb, var(--red) 14%, transparent);
+}
+
+.msg.good {
+  border: 1px solid color-mix(in srgb, var(--green) 50%, transparent);
+  background: color-mix(in srgb, var(--green) 14%, transparent);
+  color: #9be3b4;
+}
+
+.file {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+}
+
+.check {
+  padding: 14px;
+  border: 1px dashed var(--grey);
+  border-radius: 12px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.row .input {
+  flex: 1 1 280px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.input,
+.table select {
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--grey);
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+}
+
+.input:focus-visible,
+.table select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table th {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.table td[dir="ltr"] {
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  padding: 5px 10px;
+  border: 1px solid var(--grey);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  border-color: var(--amber);
+}
+
+.actions .danger:hover {
+  border-color: var(--red);
+  color: #ff8d90;
+}

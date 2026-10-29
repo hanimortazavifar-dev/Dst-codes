@@ -1,0 +1,68 @@
+/* Shared slate theme of the dealer-facing pages (Partner Ecosystem, Technical Support). */
+
+.page {
+  --card: #c3c9d3;
+  --ink: #14213d;
+  --ink2: #5b6478;
+  --line: #aab1bd;
+  --bar: #2563eb;
+  --accent: #0f766e;
+  --r: #ef4444;
+  --a: #fbbf24;
+  --gr: #10b981;
+
+  min-height: 100vh;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  background: linear-gradient(160deg, #4b5563 0%, #5b6472 100%) fixed, #525b69;
+  color: var(--ink);
+  font-family: var(--font-koodak);
+}
+
+.header {
+  margin-bottom: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  text-align: center;
+}
+
+.header h1 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 21px;
+}
+
+.header p {
+  margin: 0;
+  color: var(--ink2);
+  font-size: 12.5px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: #e5e7eb;
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+/* Inside the header card the back link sits on the light card, so it uses the ink colour. */
+.header .back {
+  color: inherit;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.back svg {
+  transform: scaleX(-1);
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}

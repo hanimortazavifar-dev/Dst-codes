@@ -1,0 +1,455 @@
+.page {
+  --background: oklch(0.08 0.005 260);
+  --foreground: oklch(0.97 0.005 240);
+  --muted-foreground: oklch(0.68 0.02 250);
+  --cyan: oklch(0.88 0.15 200);
+  --cyan-light: oklch(0.88 0.15 200);
+  --cyan-matte: oklch(0.62 0.06 200);
+  --cyan-bright: oklch(0.85 0.22 195);
+  --violet: oklch(0.58 0.25 295);
+  --crimson: oklch(0.62 0.24 22);
+  --font-display: "Helvetica LT", "Unbounded", sans-serif;
+  --font-sans: "Helvetica LT", "Space Grotesk", sans-serif;
+
+  /* clip, not hidden: hidden would make this the scroll container and break position: sticky */
+  overflow-x: clip;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.page ::selection {
+  background: var(--cyan);
+  color: #001018;
+}
+
+/* ---- header ---- */
+.header {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: header-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s forwards;
+}
+
+@keyframes header-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wordmark {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 21.6px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: wordmark-color 6s ease-in-out infinite, wordmark-wave 3.2s ease-in-out infinite;
+}
+
+@keyframes wordmark-color {
+  0%,
+  100% {
+    color: #73520f;
+  }
+  33% {
+    color: #ffd659;
+  }
+  66% {
+    color: #ff730d;
+  }
+}
+
+@keyframes wordmark-wave {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* ---- hero ---- */
+.hero {
+  position: relative;
+  height: 500vh;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 70% 45%, color-mix(in oklab, var(--violet) 14%, transparent), transparent 45%),
+    radial-gradient(circle at 85% 80%, color-mix(in oklab, var(--crimson) 10%, transparent), transparent 40%),
+    linear-gradient(90deg, var(--background) 0%, transparent 55%);
+}
+
+.field {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---- navigation (side on desktop, slide-in panel on mobile) ---- */
+.sideNav {
+  position: absolute;
+  top: 20%;
+  right: 24px;
+  z-index: 52;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.8s ease 0.5s;
+}
+
+.sideNav.show {
+  opacity: 1;
+}
+
+.sideLink,
+.mobileLink {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.sideLink {
+  margin: -8px -2px;
+  padding: 8px 2px;
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+  font-size: 11.2px;
+  letter-spacing: 0.15em;
+  transition: color 0.2s ease;
+}
+
+.sideLink:hover {
+  color: var(--foreground);
+}
+
+.navDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: navdot-cycle 3s linear infinite;
+  transition: transform 0.3s ease;
+}
+
+.sideLink:hover .navDot {
+  transform: scale(1.5);
+}
+
+/* light cyan → matte cyan → bright cyan, blended smoothly */
+@keyframes navdot-cycle {
+  0%,
+  100% {
+    background: var(--cyan-light);
+    box-shadow: 0 0 12px var(--cyan-light), 0 0 30px color-mix(in oklab, var(--cyan-light) 50%, transparent);
+  }
+  33.33% {
+    background: var(--cyan-matte);
+    box-shadow: 0 0 12px var(--cyan-matte), 0 0 30px color-mix(in oklab, var(--cyan-matte) 50%, transparent);
+  }
+  66.66% {
+    background: var(--cyan-bright);
+    box-shadow: 0 0 12px var(--cyan-bright), 0 0 30px color-mix(in oklab, var(--cyan-bright) 50%, transparent);
+  }
+}
+
+.navToggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.navToggle span {
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--foreground);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.navToggle.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.navToggle.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.navToggle.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobileNav {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 24px;
+  width: min(75vw, 320px);
+  height: 100vh;
+  padding: 100px 28px 28px;
+  background: color-mix(in oklab, var(--background) 92%, transparent);
+  backdrop-filter: blur(14px);
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mobileNav.open {
+  transform: translateX(0);
+}
+
+.mobileLink {
+  margin: -10px -4px;
+  padding: 10px 4px;
+  color: var(--foreground);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+}
+
+/* ---- stage copy ---- */
+.bottomLeft {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px 24px 40px;
+  pointer-events: none;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-bottom: 20px;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+}
+
+.kicker.show {
+  opacity: 1;
+  transform: none;
+}
+
+.kickerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.compactLabel {
+  font-size: 7px;
+}
+
+.titleWrap {
+  min-height: 8rem;
+}
+
+.title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(1.92rem, 7.2vw, 4.8rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(30px);
+  transition:
+    opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.title.compactTitle {
+  font-size: clamp(1.344rem, 5.04vw, 3.36rem);
+}
+
+.title.show {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+}
+
+/* Under the kicker on mobile; pinned bottom-right (and 30% larger) on desktop. */
+.caption {
+  max-width: 22rem;
+  margin: 0 0 20px;
+  pointer-events: none;
+}
+
+.caption p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.7;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.caption p.show {
+  opacity: 1;
+  transform: none;
+}
+
+.scrollCue {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  transition: opacity 0.4s ease;
+}
+
+.cueDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cyan);
+  animation: bob 2s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@media (max-width: 767px) {
+  .bottomLeft {
+    transform: translateY(10vh);
+  }
+}
+
+@media (min-width: 768px) {
+  .header {
+    padding: 24px 40px;
+  }
+
+  .wordmark {
+    font-size: 24px;
+  }
+
+  .sideNav {
+    right: 40px;
+    display: flex;
+  }
+
+  .navToggle,
+  .mobileNav {
+    display: none;
+  }
+
+  .bottomLeft {
+    padding: 40px 40px 48px;
+  }
+
+  .titleWrap {
+    min-height: 13rem;
+  }
+
+  /* fixed so it escapes .bottomLeft's box and pins to the viewport corner */
+  .caption {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    max-width: 20rem;
+    margin: 0;
+    padding: 40px 40px 48px;
+  }
+
+  .caption p {
+    font-size: 18.2px;
+  }
+
+  .scrollCue {
+    display: flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cueDot,
+  .kickerDot {
+    animation: none;
+  }
+}
