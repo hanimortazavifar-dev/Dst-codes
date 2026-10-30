@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import certificates from "../assets/catalog/certificates.webp";
-import maintenancePhoto from "../assets/catalog/maintenance.webp";
 import nozzleMeter from "../assets/catalog/nozzle-meter.webp";
 import safetyIcons from "../assets/catalog/safety-icons.webp";
 import screenAuto from "../assets/catalog/screen-auto.webp";
@@ -13,7 +12,7 @@ import tankProduct from "../assets/catalog/tank-product.webp";
 import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
-import { EMERGENCY, HIGHLIGHTS, INSTALL, MAINTENANCE, OIL_PATH, OPERATION, PARTS, POWER_PATH, SAFETY, SPECS, SUPPORT, TROUBLESHOOTING } from "../data/catalog";
+import { EMERGENCY, HIGHLIGHTS, MAINTENANCE, OIL_PATH, PARTS, POWER_PATH, SAFETY, SPECS, SUPPORT, TROUBLESHOOTING } from "../data/catalog";
 import { prefersReducedMotion } from "../lib/format";
 import { ROUTES } from "../routes";
 import { startOrbitBackground } from "../three/orbitBackground";
@@ -33,8 +32,6 @@ const SECTIONS = [
   ["scheme", "طرح روغن بالک"],
   ["specs", "مشخصات فنی"],
   ["parts", "قطعات"],
-  ["install", "نصب و راه‌اندازی"],
-  ["operation", "روش استفاده"],
   ["schematic", "نقشهٔ شماتیک"],
   ["smart", "سیستم مدیریت هوشمند"],
   ["troubleshooting", "عیب‌یابی"],
@@ -187,18 +184,6 @@ export default function SchemeOverview() {
           </div>
         </Section>
 
-        <Section id="install" title="نصب و راه‌اندازی">
-          <div className={g.panel}>
-            <Steps items={INSTALL} />
-          </div>
-        </Section>
-
-        <Section id="operation" title="روش استفاده">
-          <div className={g.panel}>
-            <Steps items={OPERATION} />
-          </div>
-        </Section>
-
         <Section id="schematic" title="نقشهٔ شماتیک">
           <div className={`${g.panel} ${styles.schematic}`}>
             <h3>دیاگرام هیدرولیک: مسیر روغن، فیلتر، پمپ و نازل</h3>
@@ -308,20 +293,17 @@ export default function SchemeOverview() {
         </Section>
 
         <Section id="maintenance" title="نگهداری دوره‌ای">
-          <div className={styles.split}>
-            <div className={styles.periods}>
-              {MAINTENANCE.map((m) => (
-                <div key={m.period} className={g.p4}>
-                  <h3>{m.period}</h3>
-                  <ul>
-                    {m.tasks.map((t) => (
-                      <li key={t}>{t}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            <img className={styles.photo} src={maintenancePhoto} alt="سرویس فیلتر و پمپ دنده‌ای" loading="lazy" />
+          <div className={styles.periods}>
+            {MAINTENANCE.map((m) => (
+              <div key={m.period} className={g.p4}>
+                <h3>{m.period}</h3>
+                <ul>
+                  {m.tasks.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </Section>
 
