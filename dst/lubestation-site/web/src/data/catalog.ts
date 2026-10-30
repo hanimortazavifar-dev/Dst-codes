@@ -61,8 +61,8 @@ export const OIL_PATH = ["مخزن", "فیلتر", "پمپ", "لیترشمار",
 export const POWER_PATH = ["ورودی برق", "کلید توقف اضطراری (E-Stop)", "پمپ و نمایشگر"];
 
 export const SUPPORT = {
-  phone: "۰۳۱-۳۵۰۱۰۱۰۰",
-  phoneHref: "tel:+983135010100",
+  phone: "۰۳۱-۳۵۰۱۰۰۰۰",
+  phoneHref: "tel:+983135010000",
   sms: "۳۰۰۰۵۶۶۶",
   instagram: "DSTCO",
 };
