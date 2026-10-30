@@ -113,15 +113,6 @@
   font-size: 12px;
 }
 
-.warning {
-  padding: 10px 14px;
-  border-right: 4px solid var(--amber);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--amber) 10%, var(--surface));
-  font-size: 13.5px;
-  font-weight: 700;
-}
-
 /* ---- numbered steps ---- */
 .steps {
   display: flex;

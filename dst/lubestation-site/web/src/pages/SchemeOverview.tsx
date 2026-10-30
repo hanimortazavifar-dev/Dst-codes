@@ -142,8 +142,6 @@ export default function SchemeOverview() {
           <img className={styles.heroImg} src={tankProduct} alt="مخزن LUBESTATION با برند DST" />
         </div>
 
-        <p className={styles.warning}>پیش از نصب و بهره‌برداری، این راهنما را به‌طور کامل مطالعه کنید و الزامات ایمنی را رعایت نمایید.</p>
-
         <Section id="scheme" title="طرح روغن بالک چطور کار می‌کند">
           <div className={g.panel}>
             <Steps items={SCHEME_STEPS} />
