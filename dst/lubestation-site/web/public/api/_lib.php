@@ -149,6 +149,9 @@ const LS_PAGES = ['home', 'partners', 'dealers', 'core', 'governance', 'support'
 /** Pages open to visitors without an account until an admin changes it. */
 const LS_DEFAULT_PUBLIC = ['home', 'partners', 'core'];
 
+/** Pages that always need a sign-in, whatever the visitors row on the admin page says. */
+const LS_NEVER_PUBLIC = ['admin', 'governance'];
+
 /** Workbook sheets each data page needs (titles as in src/data/schema.ts). */
 const LS_PAGE_SHEETS = [
     'governance' => ['جایگاه‌ها', 'مصرف هفتگی', 'تنظیمات'],
@@ -186,12 +189,12 @@ function is_admin(array $u): bool
     return in_array('admin', user_pages($u), true);
 }
 
-/** Pages anyone may open without signing in (set on the admin page; never the admin page). */
+/** Pages anyone may open without signing in (set on the admin page; never LS_NEVER_PUBLIC). */
 function public_pages(): array
 {
     $saved = read_json_file('access.json', []);
     $pages = isset($saved['public_pages']) && is_array($saved['public_pages']) ? $saved['public_pages'] : LS_DEFAULT_PUBLIC;
-    return array_values(array_diff(array_intersect(LS_PAGES, $pages), ['admin']));
+    return array_values(array_diff(array_intersect(LS_PAGES, $pages), LS_NEVER_PUBLIC));
 }
 
 /** What a visitor ($user null) or signed-in user may open: their own pages plus the public ones. */

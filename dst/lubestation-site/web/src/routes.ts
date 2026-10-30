@@ -27,6 +27,9 @@ export type PageKey = "home" | "partners" | "dealers" | "core" | "governance" | 
 /** Open to visitors without an account until an admin changes it (LS_DEFAULT_PUBLIC). */
 export const DEFAULT_PUBLIC_PAGES: PageKey[] = ["home", "partners", "core"];
 
+/** Pages that always need a sign-in (LS_NEVER_PUBLIC in public/api/_lib.php). */
+export const NEVER_PUBLIC_PAGES: PageKey[] = ["admin", "governance"];
+
 /** Every page of the site, in the order shown on the admin page's access table. "admin" implies all. */
 export const PAGE_LIST: { key: PageKey; label: string; path: string }[] = [
   { key: "home", label: "صفحه اصلی", path: ROUTES.home },

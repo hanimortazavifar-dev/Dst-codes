@@ -59,8 +59,8 @@ if ($action === 'create') {
 }
 
 if ($action === 'public') {
-    // The admin page itself can never be public.
-    $pages = array_values(array_diff(clean_pages(is_array($body['pages'] ?? null) ? array_diff($body['pages'], ['admin']) : []), ['admin']));
+    // The admin page and the management dashboard can never be public.
+    $pages = array_values(array_diff(clean_pages(is_array($body['pages'] ?? null) ? array_diff($body['pages'], LS_NEVER_PUBLIC) : []), LS_NEVER_PUBLIC));
     write_json_file('access.json', ['public_pages' => $pages]);
     $list();
 }

@@ -13,7 +13,7 @@ import { isValidPhone, normalizePhone, useAuth, type Profile } from "../lib/auth
 import { fa } from "../lib/format";
 import { formatJalaliDateTime } from "../lib/jalali";
 import { XlsxError } from "../lib/xlsx";
-import { PAGE_LIST, ROUTES, type PageKey } from "../routes";
+import { NEVER_PUBLIC_PAGES, PAGE_LIST, ROUTES, type PageKey } from "../routes";
 import styles from "./Admin.module.css";
 
 const TEMPLATE_URL = `${import.meta.env.BASE_URL}lubestation-data-template.xlsx`;
@@ -472,9 +472,9 @@ function PageCells({ pages, disabled, lockAdmin, visitors, who, onToggle, Cell }
     <>
       {PAGE_LIST.map((p) => {
         const inner =
-          visitors && p.key === "admin" ? (
-            <span className={styles.public} title="صفحهٔ مدیریت هیچ‌وقت عمومی نمی‌شود">
-              —
+          visitors && NEVER_PUBLIC_PAGES.includes(p.key) ? (
+            <span className={styles.public} title="این صفحه همیشه با ورود و رمز باز می‌شود و عمومی نمی‌شود">
+              🔒
             </span>
           ) : (
             <input

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { hasAccess, ROLE_LABEL, useAuth } from "../lib/auth";
-import { ROUTES, type PageKey } from "../routes";
+import { NEVER_PUBLIC_PAGES, ROUTES, type PageKey } from "../routes";
 import PasswordInput from "./PasswordInput";
 import styles from "./RequireRole.module.css";
 
@@ -22,7 +22,7 @@ interface Props {
 export default function RequireRole({ page, children }: Props) {
   const { state, publicPages, retry } = useAuth();
 
-  const isPublic = page !== "signedIn" && publicPages.includes(page);
+  const isPublic = page !== "signedIn" && !NEVER_PUBLIC_PAGES.includes(page) && publicPages.includes(page);
   // Public pages: no login. While loading, the defaults stand in so the home page isn't delayed.
   if (isPublic && state.status !== "signedIn") return <>{children}</>;
 

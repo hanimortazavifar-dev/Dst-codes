@@ -25,6 +25,8 @@ interface User {
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const PAGES: Page[] = ["home", "partners", "dealers", "core", "governance", "support", "admin"];
 const DEFAULT_PUBLIC: Page[] = ["home", "partners", "core"];
+// Keep in sync with LS_NEVER_PUBLIC in public/api/_lib.php.
+const NEVER_PUBLIC: Page[] = ["admin", "governance"];
 // Keep in sync with LS_PAGE_SHEETS in public/api/_lib.php.
 const PAGE_SHEETS: Record<"governance" | "support" | "dealers", string[]> = {
   governance: ["جایگاه‌ها", "مصرف هفتگی", "تنظیمات"],
@@ -223,7 +225,7 @@ export function apiMock(templatePath: string): Plugin {
       const list = () => json(res, { users: users.map(pub), publicPages });
       if (method === "GET") return list();
       if (input.action === "public") {
-        publicPages = cleanPages(Array.isArray(input.pages) ? input.pages.filter((p) => p !== "admin") : []).filter((p) => p !== "admin");
+        publicPages = cleanPages(Array.isArray(input.pages) ? input.pages.filter((p) => !NEVER_PUBLIC.includes(p)) : []).filter((p) => !NEVER_PUBLIC.includes(p));
         return list();
       }
       if (input.action === "create") {
