@@ -216,22 +216,6 @@
   color: var(--muted);
 }
 
-/* ---- two columns: content + photo ---- */
-.split {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  align-items: start;
-  gap: 14px;
-}
-
-.photo {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--amber);
-  border-radius: 16px;
-}
-
 /* ---- schematic ---- */
 .schematic h3:not(:first-child) {
   margin-top: 18px;
@@ -447,7 +431,6 @@
 
 @media (max-width: 800px) {
   .hero,
-  .split,
   .smart,
   .guide {
     grid-template-columns: 1fr;

@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import certificates from "../assets/catalog/certificates.webp";
-import nozzleMeter from "../assets/catalog/nozzle-meter.webp";
 import safetyIcons from "../assets/catalog/safety-icons.webp";
 import screenAuto from "../assets/catalog/screen-auto.webp";
 import screenLoading from "../assets/catalog/screen-loading.webp";
@@ -159,28 +158,25 @@ export default function SchemeOverview() {
         </Section>
 
         <Section id="parts" title="لیست قطعات">
-          <div className={styles.split}>
-            <div className={g.panel}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>شماره</th>
-                    <th>نام قطعه</th>
-                    <th>توضیحات</th>
+          <div className={g.panel}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>شماره</th>
+                  <th>نام قطعه</th>
+                  <th>توضیحات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PARTS.map(([name, desc], i) => (
+                  <tr key={name}>
+                    <td className={styles.idx}>{faNum(i + 1)}</td>
+                    <td>{name}</td>
+                    <td>{desc}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {PARTS.map(([name, desc], i) => (
-                    <tr key={name}>
-                      <td className={styles.idx}>{faNum(i + 1)}</td>
-                      <td>{name}</td>
-                      <td>{desc}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <img className={styles.photo} src={nozzleMeter} alt="نازل برداشت روغن با لیترشمار دیجیتال و قرقرهٔ شلنگ" loading="lazy" />
+                ))}
+              </tbody>
+            </table>
           </div>
         </Section>
 
