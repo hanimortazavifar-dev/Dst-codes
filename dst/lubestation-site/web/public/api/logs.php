@@ -3,7 +3,7 @@
  * Dispenser sales logs (the "لیست فروش" CSV each tank exports), one merged history per dealer.
  * The browser parses the CSV; this endpoint checks the rows, merges them and hands them out.
  *
- * GET                                                         (dealer-report access) → { logs: Log[] }
+ * GET                                         (dealer-report or dashboard access) → { logs: Log[] }
  * POST { action: "import", dealer, tank, rows: [[date, time, litres, code], …] }  (admin) → { added, total }
  * POST { action: "clear", dealer }                            (admin)
  * Log = { dealer, tank, updatedAt, uploadedBy, rows: [["2026-06-13", "08:48:51", 42.085, "1041"], …] }
@@ -20,9 +20,10 @@ function log_name(string $dealer): string
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
-    // Same rule as the dealer-report page: its users, or everyone when that page is public.
+    // The dealer report and the management dashboard are built from these logs: their users, or
+    // everyone when one of those pages is public.
     $user = current_user();
-    if (!in_array('dealers', effective_pages($user), true)) {
+    if (!array_intersect(['dealers', 'governance'], effective_pages($user))) {
         $user ? fail('شما به گزارش نمایندگی‌ها دسترسی ندارید.', 403) : fail('ابتدا وارد سامانه شوید.', 401);
     }
     $logs = [];

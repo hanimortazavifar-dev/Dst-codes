@@ -24,7 +24,7 @@ export function invalidateDashboard() {
 }
 
 async function load(): Promise<LoadedData> {
-  // The dispenser logs only reach users of the dealer report; anyone else gets 401/403 and none.
+  // The dispenser logs only reach users of the dealer report or the dashboard; others get 401/403 and none.
   const [book, logs] = await Promise.allSettled([getFile("data.php"), getJson<{ logs: TankLog[] }>("logs.php")]);
   const tankLogs = logs.status === "fulfilled" ? logs.value.logs : [];
   let base: DashboardData;

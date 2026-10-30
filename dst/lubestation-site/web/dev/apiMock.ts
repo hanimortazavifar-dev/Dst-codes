@@ -260,7 +260,7 @@ export function apiMock(templatePath: string): Plugin {
 
     if (endpoint === "logs.php") {
       if (method === "GET") {
-        if (!effectivePages(me).includes("dealers")) return me ? fail(res, "شما به گزارش نمایندگی‌ها دسترسی ندارید.", 403) : fail(res, "ابتدا وارد سامانه شوید.", 401);
+        if (!effectivePages(me).some((p) => p === "dealers" || p === "governance")) return me ? fail(res, "شما به گزارش نمایندگی‌ها دسترسی ندارید.", 403) : fail(res, "ابتدا وارد سامانه شوید.", 401);
         return json(res, { logs: [...logs.values()] });
       }
       if (!needUser("admin")) return;
