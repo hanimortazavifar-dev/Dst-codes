@@ -53,8 +53,13 @@ const STAGES: Stage[] = [
     title: ["Intelligent", "Metering"],
     caption: "Integrated smart control systems delivering absolute precision in volume metering and real-time consumption tracking.",
   },
-  // Final stage: the national network map, intentionally without copy.
-  { code: "05", label: "", title: ["", ""], caption: "" },
+  // Final stage: the national network map.
+  {
+    code: "05",
+    label: "National Coverage",
+    title: ["Nationwide", "Reach"],
+    caption: "A connected network of smart tanks across Iran, monitored in real time from a single command center.",
+  },
 ];
 
 const STAGE_IMAGES: StageImage[] = [
