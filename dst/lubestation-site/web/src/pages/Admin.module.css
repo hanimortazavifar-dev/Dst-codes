@@ -85,6 +85,47 @@
   font-size: 13px;
 }
 
+/* ---- dealer picker of the device-file upload ---- */
+.pickLabel {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.choices button {
+  padding: 8px 14px;
+  border: 1px solid var(--grey);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.choices button:hover {
+  border-color: var(--amber);
+}
+
+.choices .chosen {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #1b1405;
+  font-weight: 800;
+}
+
+.choices small {
+  font-size: 11px;
+  font-weight: 400;
+}
+
 .check {
   padding: 14px;
   border: 1px dashed var(--grey);

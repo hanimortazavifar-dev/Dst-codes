@@ -4,7 +4,7 @@ import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
 import PasswordInput from "../components/PasswordInput";
-import { DEALERS } from "../data/dealers";
+import { DEALERS, sameDealer } from "../data/dealers";
 import { inventoryFromLog, logSummary, parseTankLog, type LogRow, type ParsedLog, type TankLog } from "../data/tankLog";
 import { invalidateDashboard, useDashboard } from "../data/useDashboard";
 import { parseWorkbook, type DashboardData, type Issue } from "../data/workbook";
@@ -137,10 +137,17 @@ function TankLogSection() {
   }, []);
   useEffect(load, [load]);
 
+  /** The dealer whose history already holds this tank (matched by the tank name in the file). */
+  const ownerOf = (tank: string) => (tank ? logs?.find((l) => sameDealer(l.tank, tank))?.dealer : undefined);
+
   async function choose(f: File | null) {
     setParsed(null);
     setResult({});
-    if (f) setParsed(parseTankLog(await f.arrayBuffer()));
+    if (!f) return;
+    const p = parseTankLog(await f.arrayBuffer());
+    const owner = ownerOf(p.tank);
+    if (owner) setDealer(owner);
+    setParsed(p);
   }
 
   function changed(ok: string) {
@@ -182,6 +189,17 @@ function TankLogSection() {
 
   const blocking = parsed?.issues.some((i) => i.level === "error") ?? true;
   const dealerName = (slug: string) => DEALERS.find((d) => d.slug === slug)?.name ?? slug;
+
+  // Guard against adding one tank's file to another tank's history.
+  const current = logs?.find((l) => l.dealer === dealer);
+  const owner = parsed ? ownerOf(parsed.tank) : undefined;
+  const mismatch = !parsed?.tank
+    ? ""
+    : owner && owner !== dealer
+      ? `«${parsed.tank}» قبلاً برای «${dealerName(owner)}» بارگذاری شده است؛ مطمئن شوید نمایندگی را درست انتخاب کرده‌اید.`
+      : current?.tank && !sameDealer(current.tank, parsed.tank)
+        ? `تاریخچهٔ «${dealerName(dealer)}» مال «${current.tank}» است، اما این فایل «${parsed.tank}» است. اگر این مخزن مال نمایندگی دیگری است، آن را انتخاب کنید.`
+        : "";
 
   return (
     <section className={g.panel}>
@@ -243,15 +261,6 @@ function TankLogSection() {
       )}
 
       <h3 className={styles.sub}>بارگذاری فایل جدید</h3>
-      <div className={styles.row}>
-        <select className={styles.input} aria-label="نمایندگی این مخزن" value={dealer} onChange={(e) => setDealer(e.target.value)}>
-          {DEALERS.map((d) => (
-            <option key={d.slug} value={d.slug}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-      </div>
       <input key={fileKey} className={styles.file} type="file" accept=".csv,.txt,text/csv,text/plain" aria-label="فایل فروش دستگاه" onChange={(e) => choose(e.target.files?.[0] ?? null)} />
       {parsed && (
         <div className={styles.check}>
@@ -264,6 +273,17 @@ function TankLogSection() {
             {logFacts(parsed.rows)}
           </p>
           <IssueList issues={parsed.issues} />
+          {/* Buttons rather than a <select>: some embedded browsers never open the native list. */}
+          <p className={styles.pickLabel}>این فایل مال کدام نمایندگی است؟</p>
+          <div className={styles.choices} role="radiogroup" aria-label="نمایندگی این مخزن">
+            {DEALERS.map((d) => (
+              <button key={d.slug} type="button" role="radio" aria-checked={dealer === d.slug} className={dealer === d.slug ? styles.chosen : undefined} onClick={() => setDealer(d.slug)}>
+                {d.name}
+                {ownerOf(parsed.tank) === d.slug && <small> (همین مخزن قبلاً)</small>}
+              </button>
+            ))}
+          </div>
+          {mismatch && <p className={styles.warnText}>{mismatch}</p>}
           <button type="button" className={g.btn} disabled={busy || blocking} onClick={upload}>
             {busy ? "در حال بارگذاری…" : `افزودن به «${dealerName(dealer)}»`}
           </button>
