@@ -4,6 +4,8 @@ import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
 import PasswordInput from "../components/PasswordInput";
+import { DEALERS } from "../data/dealers";
+import { inventoryFromLog, logSummary, parseTankLog, type LogRow, type ParsedLog, type TankLog } from "../data/tankLog";
 import { invalidateDashboard, useDashboard } from "../data/useDashboard";
 import { parseWorkbook, type DashboardData, type Issue } from "../data/workbook";
 import { ApiError, getJson, postForm, postJson } from "../lib/api";
@@ -94,12 +96,181 @@ export default function Admin() {
           </div>
         </header>
 
+        <TankLogSection />
         <DataSection meta={meta} metaError={metaError} onChanged={loadMeta} />
         <SourceSection meta={meta} onChanged={loadMeta} />
         <UsersSection />
         <PasswordSection />
       </div>
     </div>
+  );
+}
+
+const faDec = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 1 });
+const shortDay = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric", month: "2-digit", day: "2-digit" });
+
+function logFacts(rows: LogRow[]) {
+  const s = logSummary(rows);
+  const inv = inventoryFromLog(rows);
+  const range = s.from && s.to ? `از ${shortDay.format(s.from)} تا ${shortDay.format(s.to)}` : "—";
+  return `${fa(s.sales)} فروش (${faDec.format(s.salesLiters)} لیتر)، ${fa(s.charges)} ردیف شارژ مخزن، ${range}${inv != null ? `؛ موجودی محاسبه‌شده ${fa(inv)} لیتر` : ""}`;
+}
+
+/** The dispenser's sales files (CSV), one merged history per dealer. */
+function TankLogSection() {
+  const [logs, setLogs] = useState<TankLog[] | null>(null);
+  const [listError, setListError] = useState("");
+  const [dealer, setDealer] = useState(DEALERS[0]?.slug ?? "");
+  const [parsed, setParsed] = useState<ParsedLog | null>(null);
+  const [fileKey, setFileKey] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [clearing, setClearing] = useState<string | null>(null);
+  const [result, setResult] = useState<{ ok?: string; error?: string }>({});
+
+  const load = useCallback(() => {
+    getJson<{ logs: TankLog[] }>("logs.php")
+      .then((r) => {
+        setLogs(r.logs);
+        setListError("");
+      })
+      .catch((e) => setListError(errorText(e)));
+  }, []);
+  useEffect(load, [load]);
+
+  async function choose(f: File | null) {
+    setParsed(null);
+    setResult({});
+    if (f) setParsed(parseTankLog(await f.arrayBuffer()));
+  }
+
+  function changed(ok: string) {
+    invalidateDashboard();
+    load();
+    setResult({ ok });
+  }
+
+  async function upload() {
+    if (!parsed) return;
+    setBusy(true);
+    setResult({});
+    try {
+      const r = await postJson<{ added: number; total: number }>("logs.php", { action: "import", dealer, tank: parsed.tank, rows: parsed.rows });
+      const name = DEALERS.find((d) => d.slug === dealer)?.name ?? dealer;
+      changed(`${fa(r.added)} ردیف جدید به تاریخچهٔ «${name}» اضافه شد (تکراری‌ها کنار گذاشته شدند)؛ مجموع ${fa(r.total)} ردیف.`);
+      setParsed(null);
+      setFileKey((k) => k + 1);
+    } catch (e) {
+      setResult({ error: errorText(e) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clear(slug: string) {
+    setBusy(true);
+    setResult({});
+    try {
+      await postJson("logs.php", { action: "clear", dealer: slug });
+      changed("داده‌های فایل دستگاه این نمایندگی پاک شد.");
+      setClearing(null);
+    } catch (e) {
+      setResult({ error: errorText(e) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const blocking = parsed?.issues.some((i) => i.level === "error") ?? true;
+  const dealerName = (slug: string) => DEALERS.find((d) => d.slug === slug)?.name ?? slug;
+
+  return (
+    <section className={g.panel}>
+      <h2 className={g.h}>فایل فروش دستگاه (CSV)</h2>
+      <p className={styles.muted}>
+        فایل «لیست فروش» که دستگاه هر مخزن خروجی می‌دهد (ستون‌های Time، Date، Liter و Code) را اینجا بارگذاری کنید. هر فایل به تاریخچهٔ همان نمایندگی اضافه می‌شود و
+        ردیف‌های تکراری کنار گذاشته می‌شوند، پس بارگذاری فایل‌های پشت‌سرهم مشکلی ندارد. ردیف‌های کد {"99999999"} شارژ مخزن حساب می‌شوند و موجودی مخزن از روی آن‌ها محاسبه
+        می‌شود؛ گزارش نمایندگی (فروش، نمودارها و موجودی) از همین فایل ساخته می‌شود.
+      </p>
+
+      <h3 className={styles.sub}>داده‌های فعلی</h3>
+      {listError && <Feedback error={listError} />}
+      {logs && !logs.length && <p className={styles.muted}>هنوز فایلی بارگذاری نشده است.</p>}
+      {logs && logs.length > 0 && (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>نمایندگی</th>
+                <th>مخزن</th>
+                <th>خلاصه</th>
+                <th>آخرین بارگذاری</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((l) => (
+                <tr key={l.dealer}>
+                  <td>{dealerName(l.dealer)}</td>
+                  <td>{l.tank || "—"}</td>
+                  <td className={styles.wrapCell}>{logFacts(l.rows)}</td>
+                  <td>
+                    {formatJalaliDateTime(new Date(l.updatedAt))}
+                    {l.uploadedBy && ` — ${l.uploadedBy}`}
+                  </td>
+                  <td className={styles.actions}>
+                    <button type="button" className={styles.danger} disabled={busy} onClick={() => setClearing(l.dealer)}>
+                      پاک کردن
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {clearing && (
+        <div className={`${styles.editor} ${styles.editorDanger}`}>
+          <span>
+            همهٔ داده‌های فایل دستگاه <b>{dealerName(clearing)}</b> پاک شود؟ این کار برگشت‌پذیر نیست.
+          </span>
+          <button type="button" className={styles.danger} disabled={busy} onClick={() => clear(clearing)}>
+            بله، پاک شود
+          </button>
+          <button type="button" disabled={busy} onClick={() => setClearing(null)}>
+            انصراف
+          </button>
+        </div>
+      )}
+
+      <h3 className={styles.sub}>بارگذاری فایل جدید</h3>
+      <div className={styles.row}>
+        <select className={styles.input} aria-label="نمایندگی این مخزن" value={dealer} onChange={(e) => setDealer(e.target.value)}>
+          {DEALERS.map((d) => (
+            <option key={d.slug} value={d.slug}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <input key={fileKey} className={styles.file} type="file" accept=".csv,.txt,text/csv,text/plain" aria-label="فایل فروش دستگاه" onChange={(e) => choose(e.target.files?.[0] ?? null)} />
+      {parsed && (
+        <div className={styles.check}>
+          <p className={styles.muted}>
+            {parsed.tank && (
+              <>
+                <b>{parsed.tank}</b> —{" "}
+              </>
+            )}
+            {logFacts(parsed.rows)}
+          </p>
+          <IssueList issues={parsed.issues} />
+          <button type="button" className={g.btn} disabled={busy || blocking} onClick={upload}>
+            {busy ? "در حال بارگذاری…" : `افزودن به «${dealerName(dealer)}»`}
+          </button>
+        </div>
+      )}
+      <Feedback {...result} />
+    </section>
   );
 }
 

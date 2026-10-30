@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, getFile } from "../lib/api";
+import { ApiError, getFile, getJson } from "../lib/api";
 import { XlsxError } from "../lib/xlsx";
-import { parseWorkbook, type DashboardData } from "./workbook";
+import { applyTankLogs, type TankLog } from "./tankLog";
+import { emptyData, parseWorkbook, type DashboardData } from "./workbook";
 
 export interface LoadedData extends DashboardData {
   updatedAt: Date | null;
@@ -23,10 +24,21 @@ export function invalidateDashboard() {
 }
 
 async function load(): Promise<LoadedData> {
-  const { data, headers } = await getFile("data.php");
-  const parsed = await parseWorkbook(data);
-  const updated = headers.get("X-Data-Updated");
-  return { ...parsed, updatedAt: updated ? new Date(updated) : null, stale: headers.get("X-Data-Stale") === "1" };
+  // The dispenser logs only reach users of the dealer report; anyone else gets 401/403 and none.
+  const [book, logs] = await Promise.allSettled([getFile("data.php"), getJson<{ logs: TankLog[] }>("logs.php")]);
+  const tankLogs = logs.status === "fulfilled" ? logs.value.logs : [];
+  let base: DashboardData;
+  let headers: Headers | null = null;
+  if (book.status === "fulfilled") {
+    base = await parseWorkbook(book.value.data);
+    headers = book.value.headers;
+  } else if (book.reason instanceof ApiError && book.reason.status === 404 && tankLogs.length) {
+    base = emptyData();
+  } else {
+    throw book.reason;
+  }
+  const updated = headers?.get("X-Data-Updated") || tankLogs.map((l) => l.updatedAt).sort().pop();
+  return { ...applyTankLogs(base, tankLogs), updatedAt: updated ? new Date(updated) : null, stale: headers?.get("X-Data-Stale") === "1" };
 }
 
 /** Loads and parses the dashboard Excel file for the signed-in user. */

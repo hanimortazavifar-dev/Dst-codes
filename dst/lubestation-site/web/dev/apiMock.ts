@@ -118,6 +118,8 @@ export function apiMock(templatePath: string): Plugin {
   const effectivePages = (u: User | null): Page[] => (u && isAdmin(u) ? [...PAGES] : PAGES.filter((p) => publicPages.includes(p) || !!u?.pages.includes(p)));
   let data: { bytes: Buffer; updatedAt: string; uploadedBy: string } = { bytes: readFileSync(templatePath), updatedAt: new Date().toISOString(), uploadedBy: "نمونه" };
   let remote: { url: string; bytes: Buffer | null; fetchedAt: string | null } = { url: "", bytes: null, fetchedAt: null };
+  type LogRow = [string, string, number, string];
+  const logs = new Map<string, { dealer: string; tank: string; updatedAt: string; uploadedBy: string; rows: LogRow[] }>();
 
   const pub = (u: User) => ({ id: u.id, phone: u.phone, name: u.name, role: isAdmin(u) ? "admin" : "viewer", pages: u.pages });
 
@@ -253,6 +255,36 @@ export function apiMock(templatePath: string): Plugin {
         if (isAdmin(u) && admins <= 1) return fail(res, "سامانه باید دست‌کم یک مدیر داشته باشد.");
         users.splice(users.indexOf(u), 1);
         return list();
+      }
+    }
+
+    if (endpoint === "logs.php") {
+      if (method === "GET") {
+        if (!effectivePages(me).includes("dealers")) return me ? fail(res, "شما به گزارش نمایندگی‌ها دسترسی ندارید.", 403) : fail(res, "ابتدا وارد سامانه شوید.", 401);
+        return json(res, { logs: [...logs.values()] });
+      }
+      if (!needUser("admin")) return;
+      const dealer = String(input.dealer ?? "");
+      if (!/^[a-z0-9-]{1,40}$/.test(dealer)) return fail(res, "نمایندگی نامعتبر است.");
+      if (input.action === "import") {
+        const rows = input.rows;
+        if (!Array.isArray(rows) || !rows.length) return fail(res, "فایل هیچ ردیف فروشی ندارد.");
+        if (rows.length > 20000) return fail(res, "تعداد ردیف‌های فایل بیش از حد مجاز است.");
+        const ok = (r: unknown): r is LogRow =>
+          Array.isArray(r) && r.length === 4 && /^\d{4}-\d{2}-\d{2}$/.test(String(r[0])) && /^\d{2}:\d{2}:\d{2}$/.test(String(r[1])) && Number.isFinite(Number(r[2])) && typeof r[3] === "string" && r[3].length <= 32;
+        if (!rows.every(ok)) return fail(res, "قالب ردیف‌های فایل نامعتبر است.");
+        const old = logs.get(dealer);
+        const merged = new Map<string, LogRow>();
+        for (const r of [...(old?.rows ?? []), ...rows.map((r): LogRow => [r[0], r[1], Math.round(Number(r[2]) * 1000) / 1000, r[3].trim()])]) {
+          merged.set(`${r[0]} ${r[1]}|${r[2].toFixed(3)}|${r[3]}`, r);
+        }
+        const sorted = [...merged.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([, r]) => r);
+        logs.set(dealer, { dealer, tank: String(input.tank ?? "").trim().slice(0, 80) || old?.tank || "", updatedAt: new Date().toISOString(), uploadedBy: me!.name || me!.phone, rows: sorted });
+        return json(res, { added: sorted.length - (old?.rows.length ?? 0), total: sorted.length });
+      }
+      if (input.action === "clear") {
+        logs.delete(dealer);
+        return json(res, { ok: true });
       }
     }
 

@@ -38,14 +38,18 @@ export interface DealerTank {
   city: string;
   cap: number;
   inv: number;
+  /** Set when the inventory comes from the dispenser's sales file (see tankLog.ts). */
+  log?: { tank: string; updatedAt: string };
 }
 
-/** One dispensing event at a dealer (rows of the "برداشت‌ها" sheet). */
+/** One dispensing event at a dealer (rows of the "برداشت‌ها" sheet, or of the dispenser's sales file). */
 export interface Withdrawal {
   dealer: string;
   at: Date;
   liters: number;
   device: string;
+  /** Code the dispenser recorded with the sale. */
+  code?: string;
 }
 
 export interface Issue {
@@ -278,6 +282,22 @@ export function parseWorkbookSheets(book: Map<string, Sheet>): DashboardData {
   withdrawals.sort((a, b) => a.at.getTime() - b.at.getTime());
 
   return { stations, weekly, tickets, sites, services, parts, dealers, withdrawals, settings, issues };
+}
+
+/** Data when no Excel file has been uploaded yet (only the dispenser files feed the site). */
+export function emptyData(): DashboardData {
+  return {
+    stations: [],
+    weekly: [],
+    tickets: [],
+    sites: [],
+    services: [],
+    parts: [],
+    dealers: [],
+    withdrawals: [],
+    settings: { leadDays: DEFAULT_LEAD_DAYS, avgResolutionDays: null },
+    issues: [{ level: "warning", message: "هنوز فایل اکسل بارگذاری نشده است؛ فقط داده‌های فایل‌های دستگاه نمایش داده می‌شود." }],
+  };
 }
 
 /** Reads and validates the data workbook. Throws XlsxError when the file is not a readable xlsx. */

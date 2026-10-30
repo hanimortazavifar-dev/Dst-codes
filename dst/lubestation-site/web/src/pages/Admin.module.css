@@ -148,6 +148,12 @@
   font-weight: 700;
 }
 
+.table .wrapCell {
+  min-width: 240px;
+  white-space: normal;
+  line-height: 1.7;
+}
+
 .table td[dir="ltr"] {
   text-align: right;
 }

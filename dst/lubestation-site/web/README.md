@@ -15,6 +15,21 @@ LiteSpeed, PHP 7.3+). No database and no foreign services: data comes from an Ex
 The template with every sheet and sample rows is `public/lubestation-data-template.xlsx`; it is
 generated from the schema by `npm run template` (Node 23+). Change the schema, then regenerate.
 
+### Dispenser sales files (CSV)
+
+Each tank's dispenser exports a "لیست فروش LUBESTATION" file: a few title lines (the tank name,
+e.g. «مخزن شماره دو»), then `Time`, `Date` (month/day/year), `Liter` and `Code` columns; usually
+UTF-16 and tab-separated, holding only the last 600 entries. On `/admin` the admin picks the dealer
+and uploads the file; the browser parses it (`src/data/tankLog.ts`) and `api/logs.php` merges the
+rows into that dealer's history (`api/storage/logs/<dealer>.json`), dropping duplicates, so files
+can be uploaded one after another without losing older entries.
+
+For a dealer with such a history, the dealer report takes its sales from it instead of the
+workbook's «برداشت‌ها» sheet. Rows with code `99999999` are tank refills (negative ones correct a
+refill); the inventory is everything refilled since the first refill in the history minus what was
+sold after it. The capacity comes from the «نمایندگی‌ها» sheet, or 6,000 L when the dealer has no
+row there. The other dashboards still read the Excel workbook.
+
 ## Run locally
 
 ```bash

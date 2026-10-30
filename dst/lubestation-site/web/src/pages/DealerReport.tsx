@@ -85,6 +85,7 @@ function Report({ dealer, data }: { dealer: Dealer; data: LoadedData }) {
       {ws.length > 0 && (
         <p className={styles.span}>
           داده‌ها از {longDate.format(ws[0].at)} تا {longDate.format(ws[ws.length - 1].at)}؛ {fa(ws.length)} برداشت ثبت‌شده
+          {tank?.log && ` — منبع: فایل فروش دستگاه${tank.log.tank ? ` (${tank.log.tank})` : ""}، به‌روزشده ${longDate.format(new Date(tank.log.updatedAt))}`}
         </p>
       )}
 
@@ -102,7 +103,7 @@ function Report({ dealer, data }: { dealer: Dealer; data: LoadedData }) {
               </div>
             </div>
           ) : (
-            <p className={g.empty}>ظرفیت و موجودی مخزن این نمایندگی در برگهٔ «نمایندگی‌ها» ثبت نشده است.</p>
+            <p className={g.empty}>موجودی مخزن این نمایندگی ثبت نشده است (نه شارژی در فایل دستگاه، نه ردیفی در برگهٔ «نمایندگی‌ها»).</p>
           )}
         </div>
         <Runway ws={ws} inv={tank?.inv ?? null} cap={tank?.cap ?? 0} />
@@ -377,7 +378,7 @@ function RangeTable({ ws }: { ws: Withdrawal[] }) {
             <tr>
               <th>زمان</th>
               <th>مقدار (لیتر)</th>
-              <th>دستگاه</th>
+              <th>کد / دستگاه</th>
             </tr>
           </thead>
           <tbody>
@@ -388,7 +389,7 @@ function RangeTable({ ws }: { ws: Withdrawal[] }) {
                     {whenFormat.format(w.at)} ساعت {timeFormat.format(w.at)}
                   </td>
                   <td>{faDec.format(w.liters)}</td>
-                  <td>{w.device ? <span className={styles.device}>{w.device}</span> : "—"}</td>
+                  <td>{w.code || w.device ? <span className={styles.device}>{w.code || w.device}</span> : "—"}</td>
                 </tr>
               ))
             ) : (
