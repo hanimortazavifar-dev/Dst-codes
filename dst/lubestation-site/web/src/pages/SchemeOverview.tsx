@@ -30,7 +30,7 @@ const SCHEME_STEPS: [string, string][] = [
 ];
 
 const SECTIONS = [
-  ["scheme", "طرح روغن فله"],
+  ["scheme", "طرح روغن بالک"],
   ["specs", "مشخصات فنی"],
   ["parts", "قطعات"],
   ["install", "نصب و راه‌اندازی"],
@@ -144,7 +144,7 @@ export default function SchemeOverview() {
 
         <p className={styles.warning}>پیش از نصب و بهره‌برداری، این راهنما را به‌طور کامل مطالعه کنید و الزامات ایمنی را رعایت نمایید.</p>
 
-        <Section id="scheme" title="طرح روغن فله چطور کار می‌کند">
+        <Section id="scheme" title="طرح روغن بالک چطور کار می‌کند">
           <div className={g.panel}>
             <Steps items={SCHEME_STEPS} />
             <div className={styles.pilot}>

@@ -98,7 +98,7 @@ const router = createBrowserRouter(
         {
           path: ROUTES.partners,
           element: (
-            <Page title="انتخاب نمایندگی — LUBESTATION" path={ROUTES.partners} description="نمایندگی‌های طرح روغن فله LUBESTATION در سراسر کشور.">
+            <Page title="انتخاب نمایندگی — LUBESTATION" path={ROUTES.partners} description="نمایندگی‌های طرح روغن بالک LUBESTATION در سراسر کشور.">
               <RequireRole page="partners">
                 <PartnerEcosystem />
               </RequireRole>
