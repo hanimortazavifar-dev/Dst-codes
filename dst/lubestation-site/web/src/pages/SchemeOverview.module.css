@@ -216,14 +216,6 @@
   color: var(--muted);
 }
 
-/* ---- schematic ---- */
-.schematic {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-}
-
 /* ---- smart management system ---- */
 .smart {
   display: grid;
