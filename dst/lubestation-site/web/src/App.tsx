@@ -5,10 +5,10 @@ import { AuthProvider } from "./lib/auth";
 import { ROUTES, SITE_URL } from "./routes";
 import CoreOperations from "./pages/CoreOperations";
 import NotFound from "./pages/NotFound";
-import PartnerEcosystem from "./pages/PartnerEcosystem";
 
 // The three.js pages and the signed-in pages are split into their own chunks.
 const Home = lazy(() => import("./pages/Home"));
+const PartnerEcosystem = lazy(() => import("./pages/PartnerEcosystem"));
 const CorporateGovernance = lazy(() => import("./pages/CorporateGovernance"));
 const TechnicalSupport = lazy(() => import("./pages/TechnicalSupport"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -65,7 +65,9 @@ function Page({ title, description, path, noindex, children }: { title: string; 
     const meta = (name: string) => () => Object.assign(document.createElement("meta"), { name });
     if (description) setMeta('meta[name="description"]', meta("description"), "content", description);
     setMeta('meta[name="robots"]', meta("robots"), "content", noindex ? "noindex, nofollow" : "index, follow");
+    // Pages without a public address must not keep the canonical link of the page visited before.
     if (path != null) setMeta('link[rel="canonical"]', () => Object.assign(document.createElement("link"), { rel: "canonical" }), "href", SITE_URL + path);
+    else document.head.querySelector('link[rel="canonical"]')?.remove();
   }, [title, description, path, noindex]);
   return children;
 }

@@ -188,6 +188,11 @@ function send_xlsx(array $access, string $path, string $source, string $updated,
             fail('سرور نتوانست داده‌های مجاز شما را جدا کند (افزونهٔ ZipArchive یا DOM روی هاست فعال نیست).', 500);
         }
         $path = $temp;
+        // Remove the per-request copy even if the visitor closes the page mid-download.
+        ignore_user_abort(true);
+        register_shutdown_function(function () use ($temp) {
+            @unlink($temp);
+        });
     }
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Length: ' . filesize($path));
@@ -195,9 +200,6 @@ function send_xlsx(array $access, string $path, string $source, string $updated,
     header('X-Data-Updated: ' . $updated);
     header('X-Data-Stale: ' . ($stale ? '1' : '0'));
     readfile($path);
-    if ($temp !== null) {
-        @unlink($temp);
-    }
     exit;
 }
 
