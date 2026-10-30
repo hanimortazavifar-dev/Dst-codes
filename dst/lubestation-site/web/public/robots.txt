@@ -6,5 +6,6 @@ Disallow: /account
 Disallow: /corporate-governance
 Disallow: /technical-support
 Disallow: /dealer-report
+Disallow: /scheme-overview
 
 Sitemap: https://lubestation.ir/sitemap.xml

@@ -6,7 +6,6 @@ import { ROUTES, SITE_URL } from "./routes";
 import CoreOperations from "./pages/CoreOperations";
 import NotFound from "./pages/NotFound";
 import PartnerEcosystem from "./pages/PartnerEcosystem";
-import SchemeOverview from "./pages/SchemeOverview";
 
 // The three.js pages and the signed-in pages are split into their own chunks.
 const Home = lazy(() => import("./pages/Home"));
@@ -15,6 +14,7 @@ const TechnicalSupport = lazy(() => import("./pages/TechnicalSupport"));
 const Admin = lazy(() => import("./pages/Admin"));
 const DealerReport = lazy(() => import("./pages/DealerReport"));
 const ChangePassword = lazy(() => import("./pages/ChangePassword"));
+const SchemeOverview = lazy(() => import("./pages/SchemeOverview"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -128,8 +128,9 @@ const router = createBrowserRouter(
         {
           path: ROUTES.scheme,
           element: (
-            <Page title="Scheme Overview — LUBESTATION" path={ROUTES.scheme} description="معرفی طرح روغن فله LUBESTATION: ذخیره‌سازی، توزیع و پایش هوشمند روغن.">
-              <RequireRole page="scheme">
+            <Page title="معرفی طرح و راهنمای مخزن — LUBESTATION" noindex>
+              {/* Every signed-in user, whatever pages they were given. */}
+              <RequireRole page="signedIn">
                 <SchemeOverview />
               </RequireRole>
             </Page>

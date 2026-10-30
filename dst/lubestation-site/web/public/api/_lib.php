@@ -144,10 +144,10 @@ function save_users(array $users): void
 // --- page access ----------------------------------------------------------------------------
 
 /** Every page of the site (keys match src/routes.ts). "admin" implies all of them. */
-const LS_PAGES = ['home', 'partners', 'dealers', 'scheme', 'core', 'governance', 'support', 'admin'];
+const LS_PAGES = ['home', 'partners', 'dealers', 'core', 'governance', 'support', 'admin'];
 
 /** Pages open to visitors without an account until an admin changes it. */
-const LS_DEFAULT_PUBLIC = ['home', 'partners', 'scheme', 'core'];
+const LS_DEFAULT_PUBLIC = ['home', 'partners', 'core'];
 
 /** Workbook sheets each data page needs (titles as in src/data/schema.ts). */
 const LS_PAGE_SHEETS = [

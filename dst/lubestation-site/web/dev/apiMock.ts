@@ -11,7 +11,7 @@ import { crc32, inflateRawSync } from "node:zlib";
 import type { Plugin } from "vite";
 import { titleKey } from "../src/data/schema.ts";
 
-type Page = "home" | "partners" | "dealers" | "scheme" | "core" | "governance" | "support" | "admin";
+type Page = "home" | "partners" | "dealers" | "core" | "governance" | "support" | "admin";
 
 interface User {
   id: string;
@@ -22,8 +22,8 @@ interface User {
 }
 
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-const PAGES: Page[] = ["home", "partners", "dealers", "scheme", "core", "governance", "support", "admin"];
-const DEFAULT_PUBLIC: Page[] = ["home", "partners", "scheme", "core"];
+const PAGES: Page[] = ["home", "partners", "dealers", "core", "governance", "support", "admin"];
+const DEFAULT_PUBLIC: Page[] = ["home", "partners", "core"];
 // Keep in sync with LS_PAGE_SHEETS in public/api/_lib.php.
 const PAGE_SHEETS: Record<"governance" | "support" | "dealers", string[]> = {
   governance: ["جایگاه‌ها", "مصرف هفتگی", "تنظیمات"],

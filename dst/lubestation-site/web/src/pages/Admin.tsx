@@ -253,7 +253,7 @@ function SourceSection({ meta, onChanged }: { meta: Meta | null; onChanged: () =
 }
 
 const ALL_PAGES = PAGE_LIST.map((p) => p.key);
-const NEW_USER_PAGES: PageKey[] = ["home", "partners", "scheme", "core", "governance"];
+const NEW_USER_PAGES: PageKey[] = ["home", "partners", "core", "governance"];
 
 /** Adds or removes one page; granting "admin" grants every page (as the server does). */
 function togglePage(pages: PageKey[], key: PageKey, on: boolean): PageKey[] {
