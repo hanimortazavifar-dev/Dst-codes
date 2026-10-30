@@ -1,8 +1,9 @@
 /**
  * In-memory stand-in for public/api/*.php, used by `npm run dev` and `vite preview` so the site can
  * be exercised without PHP. Same endpoints, payloads, access rules and error shapes; nothing is
- * persisted, and it starts with no users (so the first-admin setup screen shows) and the sample
- * template as data. Production always uses the PHP files.
+ * persisted, and it starts with no users (so the first-admin setup screen shows) and, like a fresh
+ * host, no Excel file (set LS_MOCK_SAMPLE=1 to start with the sample template instead). Production
+ * always uses the PHP files.
  */
 import { readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -116,7 +117,9 @@ export function apiMock(templatePath: string): Plugin {
   const sessions = new Map<string, string>();
   let publicPages: Page[] = [...DEFAULT_PUBLIC];
   const effectivePages = (u: User | null): Page[] => (u && isAdmin(u) ? [...PAGES] : PAGES.filter((p) => publicPages.includes(p) || !!u?.pages.includes(p)));
-  let data: { bytes: Buffer; updatedAt: string; uploadedBy: string } = { bytes: readFileSync(templatePath), updatedAt: new Date().toISOString(), uploadedBy: "نمونه" };
+  let data: { bytes: Buffer; updatedAt: string; uploadedBy: string } | null = process.env.LS_MOCK_SAMPLE
+    ? { bytes: readFileSync(templatePath), updatedAt: new Date().toISOString(), uploadedBy: "نمونه" }
+    : null;
   let remote: { url: string; bytes: Buffer | null; fetchedAt: string | null } = { url: "", bytes: null, fetchedAt: null };
   type LogRow = [string, string, number, string];
   const logs = new Map<string, { dealer: string; tank: string; updatedAt: string; uploadedBy: string; rows: LogRow[] }>();
@@ -294,9 +297,9 @@ export function apiMock(templatePath: string): Plugin {
         return json(res, {
           source: remote.url ? "url" : "upload",
           url: remote.url,
-          updatedAt: remote.url ? remote.fetchedAt : data.updatedAt,
-          uploadedBy: data.uploadedBy,
-          hasUpload: true,
+          updatedAt: remote.url ? remote.fetchedAt : (data?.updatedAt ?? null),
+          uploadedBy: data?.uploadedBy ?? null,
+          hasUpload: !!data,
           cacheMinutes: 10,
         });
       }
@@ -307,12 +310,13 @@ export function apiMock(templatePath: string): Plugin {
         if (!allowed.length) return me ? fail(res, "شما به هیچ صفحهٔ داده‌ای دسترسی ندارید.", 403) : fail(res, "ابتدا وارد سامانه شوید.", 401);
         let stale = false;
         if (remote.url) stale = (await fetchRemote(remote.url)) !== null;
-        let bytes = remote.url ? remote.bytes : data.bytes;
+        if (!remote.url && !data) return fail(res, "هنوز فایل داده‌ای بارگذاری نشده است.", 404);
+        let bytes = remote.url ? remote.bytes : data!.bytes;
         if (!bytes) return fail(res, "فایل آنلاین هنوز دریافت نشده است.", 502);
         if (allowed.length < Object.keys(PAGE_SHEETS).length) bytes = filterWorkbook(bytes, new Set(allowed.flatMap((p) => PAGE_SHEETS[p]).map(titleKey)));
         res.setHeader("Content-Type", XLSX_TYPE);
         res.setHeader("Cache-Control", "no-store");
-        res.setHeader("X-Data-Updated", (remote.url ? remote.fetchedAt : data.updatedAt) ?? "");
+        res.setHeader("X-Data-Updated", (remote.url ? remote.fetchedAt : data?.updatedAt) ?? "");
         res.setHeader("X-Data-Stale", stale ? "1" : "0");
         return res.end(bytes);
       }

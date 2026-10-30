@@ -8,19 +8,25 @@ export interface Dealer {
   city: string;
   /** Days a refill is planned to last; "days left" counts down from the last refill in the device file. */
   chargeCycleDays?: number;
+  /** Other names the same dealer has in the Excel file (rows under any of them belong to this dealer). */
+  aliases?: string[];
 }
 
 /** Refill cycle for dealers without their own `chargeCycleDays`. */
 export const DEFAULT_CHARGE_CYCLE_DAYS = 21;
 
 export const DEALERS: Dealer[] = [
-  { slug: "partak-isfahan", name: "پارتاک دیزل اصفهان", city: "اصفهان", chargeCycleDays: 21 },
+  // The slug stays as it was: the device-file history on the server is stored under it.
+  { slug: "partak-isfahan", name: "پارتاک دیزل سپهر-اصفهان", city: "اصفهان", chargeCycleDays: 21, aliases: ["پارتاک دیزل سپهر", "پارتاک دیزل اصفهان"] },
   { slug: "aria-tehran", name: "آریا دیزل تهران", city: "تهران" },
   { slug: "kavian-tabriz", name: "کاویان روان تبریز", city: "تبریز" },
   { slug: "sepehr-shiraz", name: "سپهر لوب شیراز", city: "شیراز" },
 ];
 
 export const sameDealer = (a: string, b: string) => titleKey(a) === titleKey(b);
+
+/** Whether a name from the Excel file means this dealer (its name or one of its aliases). */
+export const isDealer = (dealer: Dealer, name: string) => [dealer.name, ...(dealer.aliases ?? [])].some((n) => sameDealer(n, name));
 
 export interface Bar {
   label: string;

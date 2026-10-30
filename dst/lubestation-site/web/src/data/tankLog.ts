@@ -4,7 +4,7 @@
  * the server merges every upload into one history per dealer (api/logs.php).
  */
 import { parseDateCell, toAsciiDigits } from "../lib/jalali";
-import { dailyAverage, DEALERS, DEFAULT_CHARGE_CYCLE_DAYS, sameDealer, weekly } from "./dealers";
+import { dailyAverage, DEALERS, DEFAULT_CHARGE_CYCLE_DAYS, isDealer, weekly } from "./dealers";
 import { titleKey } from "./schema";
 import { mapPosition, type Station } from "./stations";
 import type { ChargeCycle, DashboardData, DealerTank, Issue, Withdrawal } from "./workbook";
@@ -201,10 +201,10 @@ export function applyTankLogs(data: DashboardData, logs: TankLog[]): DashboardDa
     const sales: Withdrawal[] = log.rows
       .filter((r) => !isCharge(r) && r[2] > 0)
       .map((r) => ({ dealer: dealer.name, at: rowDate(r), liters: r[2], device: "", code: r[3] }));
-    withdrawals = withdrawals.filter((w) => !sameDealer(w.dealer, dealer.name)).concat(sales);
+    withdrawals = withdrawals.filter((w) => !isDealer(dealer, w.dealer)).concat(sales);
     logSales.push(...sales);
 
-    const at = dealers.findIndex((d) => sameDealer(d.name, dealer.name));
+    const at = dealers.findIndex((d) => isDealer(dealer, d.name));
     const excel = at >= 0 ? dealers[at] : null;
     const cap = excel?.cap || DEFAULT_CAP;
     let inv = inventoryFromLog(log.rows);
@@ -222,9 +222,9 @@ export function applyTankLogs(data: DashboardData, logs: TankLog[]): DashboardDa
     else dealers.push(tank);
 
     const weeklyLiters = Math.round(dailyAverage(sales) * 7);
-    const s = stations.findIndex((st) => sameDealer(st.name, dealer.name));
+    const s = stations.findIndex((st) => isDealer(dealer, st.name));
     if (s >= 0) {
-      stations[s] = { ...stations[s], cap, inv, weekly: weeklyLiters, real: true, charge };
+      stations[s] = { ...stations[s], name: dealer.name, cap, inv, weekly: weeklyLiters, real: true, charge };
     } else {
       stations.push({
         name: dealer.name,

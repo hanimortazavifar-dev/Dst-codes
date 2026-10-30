@@ -16,7 +16,7 @@ const stroke = { fill: "none", stroke: "#fff", strokeWidth: 1.8, strokeLinecap: 
 const AVATARS: Record<string, { bg: string; icon: ReactNode }> = {
   "partak-isfahan": {
     bg: "#fff",
-    icon: <img src={partakLogo} alt="پارتاک دیزل اصفهان" className={styles.logo} />,
+    icon: <img src={partakLogo} alt="پارتاک دیزل سپهر-اصفهان" className={styles.logo} />,
   },
   "aria-tehran": {
     bg: "linear-gradient(145deg,#3b82f6,#1d4ed8)",

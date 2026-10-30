@@ -6,7 +6,7 @@ import BarChart from "../components/governance/BarChart";
 import { TankGauge } from "../components/governance/gauges";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
-import { byHour, bySize, byWeekday, dailyAverage, DEALERS, inDays, monthly, sameDealer, weekly, type Dealer } from "../data/dealers";
+import { byHour, bySize, byWeekday, dailyAverage, DEALERS, inDays, isDealer, monthly, weekly, type Dealer } from "../data/dealers";
 import { useDashboard, type LoadedData } from "../data/useDashboard";
 import { daysToCharge } from "../data/stations";
 import type { ChargeCycle, Withdrawal } from "../data/workbook";
@@ -77,8 +77,8 @@ export default function DealerReport() {
 }
 
 function Report({ dealer, data }: { dealer: Dealer; data: LoadedData }) {
-  const ws = useMemo(() => data.withdrawals.filter((w) => sameDealer(w.dealer, dealer.name)), [data.withdrawals, dealer.name]);
-  const tank = data.dealers.find((d) => sameDealer(d.name, dealer.name));
+  const ws = useMemo(() => data.withdrawals.filter((w) => isDealer(dealer, w.dealer)), [data.withdrawals, dealer]);
+  const tank = data.dealers.find((d) => isDealer(dealer, d.name));
 
   return (
     <>
