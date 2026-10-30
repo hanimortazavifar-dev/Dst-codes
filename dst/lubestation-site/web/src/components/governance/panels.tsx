@@ -10,11 +10,13 @@ import styles from "./Governance.module.css";
 const SampleTag = ({ station }: { station: Station }) => (station.real ? null : <span className={styles.tagn}>نمونه</span>);
 
 export function KpiSummary({ stations, leadDays }: { stations: Station[]; leadDays: number }) {
-  const totalWeekly = stations.reduce((a, s) => a + s.weekly, 0);
-  const totalInv = stations.reduce((a, s) => a + s.inv, 0);
-  const totalCap = stations.reduce((a, s) => a + s.cap, 0);
+  // Totals cover real stations only: sample rows (نمونه) are placeholders, not tanks.
+  const real = stations.filter((s) => s.real);
+  const totalWeekly = real.reduce((a, s) => a + s.weekly, 0);
+  const totalInv = real.reduce((a, s) => a + s.inv, 0);
+  const totalCap = real.reduce((a, s) => a + s.cap, 0);
   const needCharge = stations.filter((s) => stationStatus(s, leadDays) === "warn").length;
-  const realCount = stations.filter((s) => s.real).length;
+  const realCount = real.length;
   const fillPct = totalCap ? Math.round((totalInv / totalCap) * 100) : 0;
 
   return (

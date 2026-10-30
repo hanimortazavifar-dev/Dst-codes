@@ -190,14 +190,21 @@ export function chargeCycle(rows: LogRow[], days: number): ChargeCycle | null {
 export function applyTankLogs(data: DashboardData, logs: TankLog[]): DashboardData {
   if (!logs.length) return data;
   let withdrawals = data.withdrawals;
-  const dealers: DealerTank[] = [...data.dealers];
-  const stations: Station[] = [...data.stations];
+  let dealers: DealerTank[] = [...data.dealers];
+  let stations: Station[] = [...data.stations];
   const logSales: Withdrawal[] = [];
   const issues = [...data.issues];
 
   for (const log of logs) {
     const dealer = DEALERS.find((d) => d.slug === log.dealer);
     if (!dealer) continue;
+    // Rows under several of the dealer's names are one tank: keep the first of each.
+    const firstOnly = <T extends { name: string }>(list: T[]) => {
+      const first = list.findIndex((x) => isDealer(dealer, x.name));
+      return list.filter((x, i) => i === first || !isDealer(dealer, x.name));
+    };
+    dealers = firstOnly(dealers);
+    stations = firstOnly(stations);
     const sales: Withdrawal[] = log.rows
       .filter((r) => !isCharge(r) && r[2] > 0)
       .map((r) => ({ dealer: dealer.name, at: rowDate(r), liters: r[2], device: "", code: r[3] }));

@@ -183,6 +183,11 @@ export function parseWorkbookSheets(book: Map<string, Sheet>): DashboardData {
       issues.push({ level: "warning", message: `${where}: نام جایگاه خالی است؛ این ردیف نادیده گرفته شد.` });
       continue;
     }
+    // A repeated row would count the same tank twice in every total.
+    if (stations.some((s) => titleKey(s.name) === titleKey(name))) {
+      issues.push({ level: "warning", message: `${where}: جایگاه «${name}» تکراری است؛ فقط ردیف اول آن حساب شد.` });
+      continue;
+    }
     const cap = num(r.get("cap"), issues, where) ?? 0;
     const inv = num(r.get("inv"), issues, where) ?? 0;
     if (cap <= 0) issues.push({ level: "warning", message: `${where}: ظرفیت مخزن «${name}» وارد نشده است.` });
@@ -260,12 +265,17 @@ export function parseWorkbookSheets(book: Map<string, Sheet>): DashboardData {
 
   const dealerRows = readSheet(book, S.dealers, issues, ["name"]);
   if (!dealerRows) missingSheet(S.dealers);
-  const dealers = (dealerRows ?? [])
-    .filter((r) => text(r.get("name")))
-    .map((r) => {
-      const where = `برگه «${S.dealers.name}» ردیف ${r.line}`;
-      return { name: text(r.get("name")), city: text(r.get("city")), cap: num(r.get("cap"), issues, where) ?? 0, inv: num(r.get("inv"), issues, where) ?? 0 };
-    });
+  const dealers: DealerTank[] = [];
+  for (const r of dealerRows ?? []) {
+    const name = text(r.get("name"));
+    if (!name) continue;
+    const where = `برگه «${S.dealers.name}» ردیف ${r.line}`;
+    if (dealers.some((d) => titleKey(d.name) === titleKey(name))) {
+      issues.push({ level: "warning", message: `${where}: نمایندگی «${name}» تکراری است؛ فقط ردیف اول آن حساب شد.` });
+      continue;
+    }
+    dealers.push({ name, city: text(r.get("city")), cap: num(r.get("cap"), issues, where) ?? 0, inv: num(r.get("inv"), issues, where) ?? 0 });
+  }
 
   const withdrawalRows = readSheet(book, S.withdrawals, issues, ["dealer", "date", "liters"]);
   if (!withdrawalRows) missingSheet(S.withdrawals);
