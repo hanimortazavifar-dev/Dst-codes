@@ -19,10 +19,10 @@ const POWER_LINES = [
   "M430 789H497",
   "M625 789H789",
   "M851 727V360",
-  "M463 800V948H983V789H1034",
+  "M463 800V948H983V789H1005",
 ];
 /** Pulse signal from the flow meter to the display (split around the label pill). */
-const SIGNAL_LINES = ["M1393 286H1485V686H1407", "M1230 686H1097V714"];
+const SIGNAL_LINES = ["M1393 286H1485V686H1407", "M1230 686H1097V690"];
 
 /** Oil surface inside the tank: a repeating wave, wider than the glass so it can slide sideways. */
 const WAVE = 46;
@@ -163,9 +163,18 @@ export default function SchematicDiagram() {
           <path key={d} className={`${styles.flow} ${styles.signal}`} d={d} />
         ))}
 
-        {/* display: litres dispensed */}
-        <rect x="1063" y="762" width="69" height="37" rx="2" fill="#101916" />
-        <text className={styles.digits} x="1097.5" y="789">
+        {/* display H1, redrawn on a larger card with the monitor at twice the original size: litres dispensed */}
+        <rect x="1005" y="700" width="184" height="160" rx="16" fill="#f6f8fc" stroke="#e1e6ee" strokeWidth="1.5" filter="drop-shadow(0 3px 4px rgba(0,0,0,0.12))" />
+        <rect x="1005" y="700" width="46" height="22" rx="8" fill="#2664ea" />
+        <text className={styles.tag} x="1028" y="716">
+          H1
+        </text>
+        <path d="M1089 688H1105L1097 700Z" fill="#2265dd" />
+        <rect x="1015" y="724" width="164" height="104" rx="10" fill="#31373c" />
+        <rect x="1029" y="736" width="136" height="80" rx="4" fill="#101916" />
+        <rect x="1086" y="828" width="22" height="16" fill="#31363e" />
+        <rect x="1060" y="843" width="74" height="10" rx="5" fill="#31363e" />
+        <text className={`${styles.digits} ${styles.big}`} x="1097" y="789">
           {dispensed.toFixed(1)}
         </text>
       </svg>

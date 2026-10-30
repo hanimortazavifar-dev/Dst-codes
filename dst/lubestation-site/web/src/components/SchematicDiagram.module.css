@@ -136,6 +136,19 @@
   unicode-bidi: plaintext;
 }
 
+.big {
+  font-size: 38px;
+  dominant-baseline: central;
+}
+
+.tag {
+  fill: #fff;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
 .led {
   animation: blink 1s steps(1) infinite;
 }
