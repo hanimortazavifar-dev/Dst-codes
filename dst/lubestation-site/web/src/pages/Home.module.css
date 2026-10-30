@@ -314,7 +314,8 @@
   margin: 0;
   color: var(--foreground);
   font-family: var(--font-display);
-  font-size: clamp(1.92rem, 7.2vw, 4.8rem);
+  /* One size for every stage's title. */
+  font-size: clamp(1.344rem, 5.04vw, 3.36rem);
   font-weight: 700;
   line-height: 0.98;
   letter-spacing: -0.02em;
@@ -325,10 +326,6 @@
     opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
     transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
     filter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.title.compactTitle {
-  font-size: clamp(1.344rem, 5.04vw, 3.36rem);
 }
 
 .title.show {

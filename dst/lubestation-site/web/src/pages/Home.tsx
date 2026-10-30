@@ -19,8 +19,7 @@ interface Stage {
   label: string;
   title: [string, string];
   caption: string;
-  /** Render the title (and optionally the label) at 70% size. */
-  compactTitle?: boolean;
+  /** Render the label at a smaller size (long labels). */
   compactLabel?: boolean;
 }
 
@@ -30,21 +29,18 @@ const STAGES: Stage[] = [
     label: "Brand Identity",
     title: ["Corporate", "Essence"],
     caption: "Setting the standard in smart lubrication infrastructure and industrial fluid management.",
-    compactTitle: true,
   },
   {
     code: "02",
     label: "Fluid Storage",
     title: ["Advanced", "Containment"],
     caption: "Heavy-duty storage systems engineered for maximum compliance, security, and containment integrity.",
-    compactTitle: true,
   },
   {
     code: "03",
     label: "Transit & Logistics",
     title: ["Logistics", "Network"],
     caption: "Optimized supply chain pathways ensuring secure and efficient bulk fuel distribution across regional corridors.",
-    compactTitle: true,
     compactLabel: true,
   },
   {
@@ -212,7 +208,7 @@ export default function Home() {
               </span>
 
               <div className={styles.titleWrap}>
-                <h1 className={`${styles.title} ${stage.compactTitle ? styles.compactTitle : ""} ${copyVisible ? styles.show : ""}`}>
+                <h1 className={`${styles.title} ${copyVisible ? styles.show : ""}`}>
                   {stage.title[0]}
                   <br />
                   {stage.title[1]}
