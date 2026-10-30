@@ -21,7 +21,7 @@ import styles from "./SchemeOverview.module.css";
 
 const faNum = (n: number) => n.toLocaleString("fa-IR");
 
-/** The scheme in short (kept from the earlier version of this page). */
+/** The scheme in short. */
 const SCHEME_STEPS: [string, string][] = [
   ["نصب مخزن پلمپ‌شده", "مخزن هوشمند در نمایندگی نصب و با سامانهٔ مرکزی متصل می‌شود."],
   ["ثبت برداشت با کد خودرو", "هر برداشت روغن برای یک خودروی مشخص ثبت می‌شود؛ مصرف روغن به تفکیک خودرو و تاریخ قابل ردیابی است."],
@@ -145,23 +145,6 @@ export default function SchemeOverview() {
         <Section id="scheme" title="طرح روغن بالک چطور کار می‌کند">
           <div className={g.panel}>
             <Steps items={SCHEME_STEPS} />
-            <div className={styles.pilot}>
-              <div>
-                <span>نمایندگی پایلوت</span>
-                <b>پارتاک دیزل سپهر (اصفهان)</b>
-              </div>
-              <div className={styles.roadmap}>
-                <span>
-                  <b>۱</b> فاز فعلی — پایلوت
-                </span>
-                <span>
-                  <b>۵</b> فاز بعدی — توسعهٔ اولیه
-                </span>
-                <span>
-                  <b>۱۰</b> هدف میان‌مدت
-                </span>
-              </div>
-            </div>
           </div>
         </Section>
 

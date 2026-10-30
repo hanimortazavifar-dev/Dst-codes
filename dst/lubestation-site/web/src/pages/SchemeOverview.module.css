@@ -155,48 +155,6 @@
   font-weight: 800;
 }
 
-.pilot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 12px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  font-size: 13px;
-}
-
-.pilot > div:first-child {
-  display: flex;
-  flex-direction: column;
-}
-
-.pilot span {
-  color: var(--muted);
-}
-
-.pilot b {
-  color: var(--fg);
-}
-
-.roadmap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.roadmap span {
-  padding: 4px 12px;
-  border: 1px solid var(--grey);
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.roadmap b {
-  color: var(--amber);
-}
-
 /* ---- specs ---- */
 .specs {
   display: grid;
