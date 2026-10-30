@@ -8,7 +8,8 @@ import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
 import { byHour, bySize, byWeekday, dailyAverage, DEALERS, inDays, monthly, sameDealer, weekly, type Dealer } from "../data/dealers";
 import { useDashboard, type LoadedData } from "../data/useDashboard";
-import type { Withdrawal } from "../data/workbook";
+import { daysToCharge } from "../data/stations";
+import type { ChargeCycle, Withdrawal } from "../data/workbook";
 import { fa, prefersReducedMotion } from "../lib/format";
 import { parseDateCell } from "../lib/jalali";
 import { ROUTES } from "../routes";
@@ -106,7 +107,7 @@ function Report({ dealer, data }: { dealer: Dealer; data: LoadedData }) {
             <p className={g.empty}>موجودی مخزن این نمایندگی ثبت نشده است (نه شارژی در فایل دستگاه، نه ردیفی در برگهٔ «نمایندگی‌ها»).</p>
           )}
         </div>
-        <Runway ws={ws} inv={tank?.inv ?? null} cap={tank?.cap ?? 0} />
+        <Runway ws={ws} inv={tank?.inv ?? null} cap={tank?.cap ?? 0} charge={tank?.log?.charge ?? null} />
       </div>
 
       <ControlPanel />
@@ -157,11 +158,15 @@ function Ring({ fraction, color, value, caption }: { fraction: number; color: st
   );
 }
 
-/** Oil remaining (%) and estimated days left at the last 30 days' rate. */
-function Runway({ ws, inv, cap }: { ws: Withdrawal[]; inv: number | null; cap: number }) {
+/**
+ * Oil remaining (%) and days left: with a refill in the device file, the days until the next planned
+ * refill (the dealer's cycle counted from the last one); otherwise an estimate at the last 30 days' rate.
+ */
+function Runway({ ws, inv, cap, charge }: { ws: Withdrawal[]; inv: number | null; cap: number; charge: ChargeCycle | null }) {
   const daily = dailyAverage(ws);
   const pct = inv != null && cap > 0 ? inv / cap : null;
-  const days = inv != null && daily > 0 ? inv / daily : null;
+  const days = charge ? daysToCharge(charge) : inv != null && daily > 0 ? inv / daily : null;
+  const ref = charge ? charge.days : RUNWAY_REF_DAYS;
   return (
     <div className={g.p4}>
       <h2 className={`${g.h} ${g.hSmall}`}>وضعیت مصرف</h2>
@@ -173,13 +178,18 @@ function Runway({ ws, inv, cap }: { ws: Withdrawal[]; inv: number | null; cap: n
         <div>
           <h3>زمان باقیمانده</h3>
           {days != null ? (
-            <Ring fraction={days / RUNWAY_REF_DAYS} color={zoneColor(days / RUNWAY_REF_DAYS)} value={fa(days)} caption="روز باقیمانده" />
+            <Ring fraction={days / ref} color={zoneColor(days / ref)} value={fa(days)} caption="روز باقیمانده" />
           ) : (
             <p className={g.empty}>{inv == null ? "ثبت نشده" : "مصرفی در ۳۰ روز اخیر ثبت نشده"}</p>
           )}
         </div>
       </div>
       <div className={g.meta}>
+        {charge && (
+          <div>
+            آخرین شارژ: <b>{longDate.format(charge.last)}</b> — شارژ بعدی تا <b>{longDate.format(charge.due)}</b> (دورهٔ {fa(charge.days)} روزه)
+          </div>
+        )}
         <div>
           میانگین مصرف روزانه (۳۰ روز اخیر): <b>{faDec.format(daily)} لیتر</b>
         </div>

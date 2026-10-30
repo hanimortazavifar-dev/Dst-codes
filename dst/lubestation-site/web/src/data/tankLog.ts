@@ -4,10 +4,10 @@
  * the server merges every upload into one history per dealer (api/logs.php).
  */
 import { parseDateCell, toAsciiDigits } from "../lib/jalali";
-import { dailyAverage, DEALERS, sameDealer, weekly } from "./dealers";
+import { dailyAverage, DEALERS, DEFAULT_CHARGE_CYCLE_DAYS, sameDealer, weekly } from "./dealers";
 import { titleKey } from "./schema";
 import { mapPosition, type Station } from "./stations";
-import type { DashboardData, DealerTank, Issue, Withdrawal } from "./workbook";
+import type { ChargeCycle, DashboardData, DealerTank, Issue, Withdrawal } from "./workbook";
 
 /** Code the dispenser writes for oil put into the tank (a refill; negative values correct it). */
 export const CHARGE_CODE = "99999999";
@@ -171,6 +171,16 @@ export function inventoryFromLog(rows: LogRow[]): number | null {
   return inv;
 }
 
+/** The last refill (a positive charge row) and when the next is due, `days` later (counted from its day). */
+export function chargeCycle(rows: LogRow[], days: number): ChargeCycle | null {
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (!isCharge(rows[i]) || rows[i][2] <= 0) continue;
+    const last = rowDate(rows[i]);
+    return { last, due: new Date(last.getFullYear(), last.getMonth(), last.getDate() + days), days };
+  }
+  return null;
+}
+
 /**
  * Puts the dispenser logs into the dashboard data: a dealer with a log gets its sales from the log
  * (replacing the Excel "برداشت‌ها" rows for that dealer) and its inventory from the refills. The
@@ -206,14 +216,15 @@ export function applyTankLogs(data: DashboardData, logs: TankLog[]): DashboardDa
     }
     inv ??= excel?.inv ?? null;
     if (inv == null) continue;
-    const tank: DealerTank = { name: dealer.name, city: excel?.city || dealer.city, cap, inv, log: { tank: log.tank, updatedAt: log.updatedAt } };
+    const charge = chargeCycle(log.rows, dealer.chargeCycleDays ?? DEFAULT_CHARGE_CYCLE_DAYS);
+    const tank: DealerTank = { name: dealer.name, city: excel?.city || dealer.city, cap, inv, log: { tank: log.tank, updatedAt: log.updatedAt, charge } };
     if (at >= 0) dealers[at] = tank;
     else dealers.push(tank);
 
     const weeklyLiters = Math.round(dailyAverage(sales) * 7);
     const s = stations.findIndex((st) => sameDealer(st.name, dealer.name));
     if (s >= 0) {
-      stations[s] = { ...stations[s], cap, inv, weekly: weeklyLiters, real: true };
+      stations[s] = { ...stations[s], cap, inv, weekly: weeklyLiters, real: true, charge };
     } else {
       stations.push({
         name: dealer.name,
@@ -226,6 +237,7 @@ export function applyTankLogs(data: DashboardData, logs: TankLog[]): DashboardDa
         alarms: 0,
         pos: mapPosition(null, null, tank.city),
         maint: { last: null, next: null, open: 0, note: "" },
+        charge,
       });
     }
   }

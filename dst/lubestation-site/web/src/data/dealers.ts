@@ -6,10 +6,15 @@ export interface Dealer {
   slug: string;
   name: string;
   city: string;
+  /** Days a refill is planned to last; "days left" counts down from the last refill in the device file. */
+  chargeCycleDays?: number;
 }
 
+/** Refill cycle for dealers without their own `chargeCycleDays`. */
+export const DEFAULT_CHARGE_CYCLE_DAYS = 21;
+
 export const DEALERS: Dealer[] = [
-  { slug: "partak-isfahan", name: "پارتاک دیزل اصفهان", city: "اصفهان" },
+  { slug: "partak-isfahan", name: "پارتاک دیزل اصفهان", city: "اصفهان", chargeCycleDays: 21 },
   { slug: "aria-tehran", name: "آریا دیزل تهران", city: "تهران" },
   { slug: "kavian-tabriz", name: "کاویان روان تبریز", city: "تبریز" },
   { slug: "sepehr-shiraz", name: "سپهر لوب شیراز", city: "شیراز" },

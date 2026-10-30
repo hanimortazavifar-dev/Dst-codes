@@ -1,3 +1,6 @@
+import { daysFromToday } from "../lib/jalali";
+import type { ChargeCycle } from "./workbook";
+
 /** Tank stations shown on the senior-management dashboard (rows of the "جایگاه‌ها" sheet). */
 export interface Station {
   name: string;
@@ -15,6 +18,16 @@ export interface Station {
   /** Normalized [x, y] position on the Iran province map image, or null when unknown. */
   pos: [number, number] | null;
   maint: { last: Date | null; next: Date | null; open: number; note: string };
+  /** From the device file: "days left" counts down to the next planned refill instead of using consumption. */
+  charge?: ChargeCycle | null;
+}
+
+/** A refill-cycle station needs charging once this few days are left. */
+const CHARGE_WARN_DAYS = 5;
+
+/** Whole days until the next planned refill (0 once it is due or overdue). */
+export function daysToCharge(c: ChargeCycle) {
+  return Math.max(0, daysFromToday(c.due));
 }
 
 export type StationStatus = "ok" | "warn" | "alarm" | "idle";
@@ -31,6 +44,7 @@ export const fillPercent = (s: Station) => (s.cap > 0 ? Math.max(0, Math.min(100
 const perDay = (s: Station) => s.weekly / 7;
 
 export function daysLeft(s: Station): number | null {
+  if (s.charge) return daysToCharge(s.charge);
   const rate = perDay(s);
   return rate > 0 ? Math.round(s.inv / rate) : null;
 }
@@ -40,6 +54,7 @@ export const reorderPoint = (s: Station, leadDays: number) => Math.round(perDay(
 
 export function stationStatus(s: Station, leadDays: number): StationStatus {
   if (s.alarms > 0) return "alarm";
+  if (s.real && s.charge) return daysToCharge(s.charge) <= CHARGE_WARN_DAYS ? "warn" : "ok";
   // Without consumption the reorder point is 0, and an empty tank would always read as "warn".
   if (!s.real || s.weekly <= 0) return "idle";
   if (s.inv <= reorderPoint(s, leadDays)) return "warn";

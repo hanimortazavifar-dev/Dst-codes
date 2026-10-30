@@ -92,11 +92,17 @@ export function StationCard({ station: s, leadDays }: { station: Station; leadDa
           مصرف هفتگی: <b>{fa(s.weekly)} لیتر</b>
         </div>
         <div>
-          روز تا اتمام: <b>{remaining != null ? `${fa(remaining)} روز` : "—"}</b>
+          {s.charge ? "روز تا شارژ بعدی" : "روز تا اتمام"}: <b>{remaining != null ? `${fa(remaining)} روز` : "—"}</b>
         </div>
-        <div>
-          نقطه سفارش (لید {fa(leadDays)} روزه): <b>{fa(reorderPoint(s, leadDays))} لیتر</b>
-        </div>
+        {s.charge ? (
+          <div>
+            آخرین شارژ: <b>{formatJalali(s.charge.last)}</b> (دورهٔ {fa(s.charge.days)} روزه)
+          </div>
+        ) : (
+          <div>
+            نقطه سفارش (لید {fa(leadDays)} روزه): <b>{fa(reorderPoint(s, leadDays))} لیتر</b>
+          </div>
+        )}
         <div>
           هشدار فعال: <b style={{ color: s.alarms ? "var(--red)" : "var(--fg)" }}>{fa(s.alarms)}</b>
         </div>
@@ -279,6 +285,10 @@ export function ActionList({ stations, leadDays }: { stations: Station[]; leadDa
     const sample = s.real ? "" : " (نمونه)";
     if (status === "alarm") {
       items.push({ tone: "red", title: s.name, sub: `${fa(s.alarms)} هشدار فعال — نیاز به بررسی${sample}` });
+    } else if (status === "warn" && s.charge) {
+      const remaining = daysLeft(s) ?? 0;
+      const when = remaining > 0 ? `${fa(remaining)} روز تا موعد شارژ` : "موعد شارژ رسیده است";
+      items.push({ tone: "warn", title: s.name, sub: `${when} (${fa(s.charge.days)} روز از شارژ ${formatJalali(s.charge.last)})${sample}` });
     } else if (status === "warn") {
       const remaining = daysLeft(s);
       const left = remaining != null ? ` — حدود ${fa(remaining)} روز تا اتمام` : "";

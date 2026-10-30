@@ -128,7 +128,7 @@ function Dashboard({ data, isAdmin }: { data: LoadedData; isAdmin: boolean }) {
       </section>
 
       <div className={styles.foot}>
-        «روز تا اتمام» با نرخ مصرف هفتگی و «نقطه سفارش» با زمان تأمین {fa(lead)} روزه محاسبه می‌شود.
+        «روز تا اتمام» با نرخ مصرف هفتگی و «نقطه سفارش» با زمان تأمین {fa(lead)} روزه محاسبه می‌شود؛ برای جایگاه‌هایی که فایل دستگاه دارند، «روز تا شارژ بعدی» از آخرین شارژ مخزن شمرده می‌شود.
         {data.updatedAt && <> آخرین به‌روزرسانی داده‌ها: {formatJalaliDateTime(data.updatedAt)}.</>}
       </div>
     </>

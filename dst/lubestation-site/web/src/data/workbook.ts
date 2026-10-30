@@ -32,6 +32,13 @@ export interface WeekPoint {
   liters: number;
 }
 
+/** Last refill of a tank and the date the next one is due (refill + the dealer's cycle). */
+export interface ChargeCycle {
+  last: Date;
+  due: Date;
+  days: number;
+}
+
 /** A dealer's bulk-oil tank (rows of the "نمایندگی‌ها" sheet). */
 export interface DealerTank {
   name: string;
@@ -39,7 +46,7 @@ export interface DealerTank {
   cap: number;
   inv: number;
   /** Set when the inventory comes from the dispenser's sales file (see tankLog.ts). */
-  log?: { tank: string; updatedAt: string };
+  log?: { tank: string; updatedAt: string; charge: ChargeCycle | null };
 }
 
 /** One dispensing event at a dealer (rows of the "برداشت‌ها" sheet, or of the dispenser's sales file). */
