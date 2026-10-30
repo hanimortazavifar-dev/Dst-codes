@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import certificates from "../assets/catalog/certificates.webp";
 import safetyIcons from "../assets/catalog/safety-icons.webp";
+import schematic from "../assets/catalog/schematic.webp";
 import screenAuto from "../assets/catalog/screen-auto.webp";
 import screenLoading from "../assets/catalog/screen-loading.webp";
 import screenSales from "../assets/catalog/screen-sales.webp";
@@ -11,7 +12,7 @@ import tankProduct from "../assets/catalog/tank-product.webp";
 import dstLogo from "../assets/dst-logo.webp";
 import g from "../components/governance/Governance.module.css";
 import { HomeIcon } from "../components/icons";
-import { EMERGENCY, HIGHLIGHTS, MAINTENANCE, OIL_PATH, PARTS, POWER_PATH, SAFETY, SPECS, SUPPORT, TROUBLESHOOTING } from "../data/catalog";
+import { EMERGENCY, HIGHLIGHTS, MAINTENANCE, PARTS, SAFETY, SPECS, SUPPORT, TROUBLESHOOTING } from "../data/catalog";
 import { prefersReducedMotion } from "../lib/format";
 import { ROUTES } from "../routes";
 import { startOrbitBackground } from "../three/orbitBackground";
@@ -61,23 +62,6 @@ function Steps({ items }: { items: [string, string][] }) {
         </li>
       ))}
     </ol>
-  );
-}
-
-function Flow({ items, label }: { items: string[]; label: string }) {
-  return (
-    <div className={styles.flow} role="list" aria-label={label}>
-      {items.map((item, i) => (
-        <div key={item} className={styles.flowItem} role="listitem">
-          <span className={styles.flowBox}>{item}</span>
-          {i < items.length - 1 && (
-            <span className={styles.flowArrow} aria-hidden="true">
-              ←
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -181,11 +165,15 @@ export default function SchemeOverview() {
         </Section>
 
         <Section id="schematic" title="نقشهٔ شماتیک">
-          <div className={`${g.panel} ${styles.schematic}`}>
-            <h3>دیاگرام هیدرولیک: مسیر روغن، فیلتر، پمپ و نازل</h3>
-            <Flow items={OIL_PATH} label="مسیر روغن" />
-            <h3>دیاگرام الکتریکی: اتصالات برق، فیوزها، کلید E-Stop و نمایشگر</h3>
-            <Flow items={POWER_PATH} label="مسیر برق" />
+          <div className={g.panel}>
+            <img
+              className={styles.schematic}
+              src={schematic}
+              width={1600}
+              height={1029}
+              alt="نقشهٔ شماتیک دستگاه: مسیر هیدرولیک (مخزن، فیلتر، پمپ، لیترشمار، نازل) و مسیر الکتریکی (ورودی برق، فیوز، کلید E-Stop، کنتاکتور، نمایشگر)"
+              loading="lazy"
+            />
           </div>
         </Section>
 

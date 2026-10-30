@@ -217,35 +217,11 @@
 }
 
 /* ---- schematic ---- */
-.schematic h3:not(:first-child) {
-  margin-top: 18px;
-}
-
-.flow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 4px;
-}
-
-.flowItem {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.flowBox {
-  padding: 8px 14px;
-  border: 1px solid var(--amber);
-  border-radius: 10px;
-  background: var(--surface2);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.flowArrow {
-  color: var(--amber);
-  font-size: 18px;
+.schematic {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
 }
 
 /* ---- smart management system ---- */

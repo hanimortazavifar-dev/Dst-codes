@@ -55,11 +55,6 @@ export const SAFETY = [
   "برچسب‌ها و علائم هشدار روی دستگاه را سالم و قابل مشاهده نگه دارید.",
 ];
 
-/** Oil path through the unit (schematic diagram). */
-export const OIL_PATH = ["مخزن", "فیلتر", "پمپ", "لیترشمار", "نازل برداشت"];
-/** Electrical path (schematic diagram). */
-export const POWER_PATH = ["ورودی برق", "کلید توقف اضطراری (E-Stop)", "پمپ و نمایشگر"];
-
 export const SUPPORT = {
   phone: "۰۳۱-۳۵۰۱۰۰۰۰",
   phoneHref: "tel:+983135010000",
